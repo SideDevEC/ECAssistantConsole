@@ -1,10 +1,10 @@
 using ECAssistant;
 using ECAssistant.Config;
 using ECAssistant.Engine;
-using ECAssistant.Controller;
+using ECAssistant.TUI.Controller;
 using ECAssistant.Services;
 using ECAssistant.Testing;
-using ECAssistant.UI;
+using ECAssistant.TUI.UI;
 
 namespace ECAssistantConsole;
 

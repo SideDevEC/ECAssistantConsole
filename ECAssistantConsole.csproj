@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../ECAssistant/ECAssistant.csproj" />
+    <ProjectReference Include="../ECAssistantTUI/ECAssistant.TUI.csproj" />
     <ProjectReference Include="../ECAssistantCore/ECAssistant.Core.csproj" />
   </ItemGroup>
 
