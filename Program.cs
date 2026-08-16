@@ -1,4 +1,5 @@
 using ECAssistant.Core;
+using ECAssistant.Core.Composition;
 using ECAssistant.Core.Config;
 using ECAssistant.Core.Engine;
 using ECAssistant.TUI.Controller;
@@ -19,82 +20,32 @@ public class Program
             return await RunTestsAsync(args.Skip(1).ToArray());
         }
 
-        // ── Build config ──
+        // ── Composition root: wires all services ──
         var userConfigDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "ECAssistant");
-        var logPath = Path.Combine(userConfigDir, "ECAssistant.log");
-        var logger = new Logger(logPath, LogLevel.Info);
+        var root = new EcaCompositionRoot(userConfigDir, args);
+        var services = root.Build();
 
-        var builder = AgentConfigBuilder.Create()
-            .WorkingDirectory(userConfigDir);
-        ApplyCommandLineArgsToBuilder(ref builder, args);
-
-        var config = builder.Build();
-
-        // ── Resolve model path ──
-        var effectiveModelPath = config.Llm.ModelPath;
-        if (!Path.IsPathRooted(effectiveModelPath))
+        if (!File.Exists(services.ModelPath))
         {
-            var inWorkDir = Path.Combine(userConfigDir, effectiveModelPath);
-            var inBuildDir = Path.Combine(AppContext.BaseDirectory, effectiveModelPath);
-            if (File.Exists(inWorkDir))
-                effectiveModelPath = inWorkDir;
-            else if (File.Exists(inBuildDir))
-                effectiveModelPath = inBuildDir;
-            else
-                effectiveModelPath = inWorkDir;
-        }
-
-        if (!File.Exists(effectiveModelPath))
-        {
-            Console.WriteLine($"[Error] Model not found: {effectiveModelPath}");
+            Console.WriteLine($"[Error] Model not found: {services.ModelPath}");
             Console.WriteLine($"[Hint] Put your .gguf model in: {userConfigDir} or set full path in appsettings.json");
             return 1;
         }
-
-        // ── Create directories ──
-        Directory.CreateDirectory(userConfigDir);
-        Directory.CreateDirectory(Path.Combine(userConfigDir, config.Memory.DataPath));
-        Directory.CreateDirectory(Path.Combine(userConfigDir, config.Workspace.Path));
 
         // ── Create terminal and controller ──
         var console = new EGuiConsole();
         var controller = new AppController(
             console,
-            config,
-            effectiveModelPath,
-            userConfigDir,
-            userConfigDir,
-            logger);
+            services.Config,
+            services.ModelPath,
+            services.WorkingDirectory,
+            services.UserConfigDirectory,
+            services.Logger,
+            null,
+            services.BackgroundProcesses,
+            services.FileWatcher);
 
         return await controller.RunAsync();
-    }
-
-    // ── Command-line args ──
-
-    private static void ApplyCommandLineArgsToBuilder(ref AgentConfigBuilder builder, string[] args)
-    {
-        for (int i = 0; i < args.Length; i++)
-        {
-            var arg = args[i].ToLower().TrimStart('-');
-            switch (arg)
-            {
-                case "model":
-                    if (i + 1 < args.Length) builder.WithModel(args[++i]); break;
-                case "ctx":
-                case "contextsize":
-                    if (i + 1 < args.Length && uint.TryParse(args[++i], out uint ctx)) builder.ContextSize(ctx); break;
-                case "gpu":
-                case "gpulayers":
-                case "gpu_layers":
-                    if (i + 1 < args.Length && int.TryParse(args[++i], out int layers)) builder.GpuLayers(Math.Clamp(layers, 0, 100)); break;
-                case "threads":
-                case "threadcount":
-                    if (i + 1 < args.Length && int.TryParse(args[++i], out int thr)) builder.Threads(thr); break;
-                case "temp":
-                case "temperature":
-                    if (i + 1 < args.Length && float.TryParse(args[++i], out float t)) builder.Temperature(Math.Clamp(t, 0.0f, 2.0f)); break;
-            }
-        }
     }
 
     // ── Test Mode ──
