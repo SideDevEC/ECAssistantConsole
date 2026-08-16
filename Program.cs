@@ -1,9 +1,9 @@
-using ECAssistant;
-using ECAssistant.Config;
-using ECAssistant.Engine;
+using ECAssistant.Core;
+using ECAssistant.Core.Config;
+using ECAssistant.Core.Engine;
 using ECAssistant.TUI.Controller;
-using ECAssistant.Services;
-using ECAssistant.Testing;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Testing;
 using ECAssistant.TUI.UI;
 
 namespace ECAssistantConsole;
