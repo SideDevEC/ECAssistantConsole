@@ -1,6 +1,6 @@
 # ECAssistant Console — Architecture
 
-**Updated:** 2026-08-16 (v11.1)
+**Updated:** 2026-08-25 (v11.2 — LLamaSharp packages removed, port control wired through Core)
 **Build:** 0 errors, 0 warnings
 **Tests:** 5/5 mock tests passing
 
@@ -14,7 +14,7 @@ ECAssistantConsole is a minimal .NET 8 console executable that launches ECAssist
 ECAssistantConsole/
 ├── ECAssistantConsole.csproj      ← Console exe
 │     OutputType=Exe, AssemblyName=ecassistant
-│     ProjectReferences: ECAssistant.TUI, ECAssistant.Core
+│     Packages: Microsoft.Extensions.Logging.Abstractions + System.Text.Json (LLamaSharp removed in v11.2)
 │
 └── Program.cs                     ← Entry point
 ```
@@ -31,6 +31,8 @@ Program.cs
   ├── new AppController(console, config, ...)  ← from ECAssistant.TUI
   └── await controller.RunAsync()
 ```
+
+> CLI args (including `--port <N>`) are forwarded to `EcaCompositionRoot(userConfigDir, args)`, which parses them via `AgentConfigBuilder`. `--port` routes to `UseLocalLLM(port:)` (Core v10.31) and is ultimately passed to the spawned LLM server by `ServerLauncher`.
 
 ## Why It's Separate
 
@@ -57,8 +59,9 @@ ECAssistantTUI is a **library** — it can be hosted by any .NET 8 app. The cons
 | `--mock` | Use mock engine (no model needed) |
 | `--model <path>` | Override model path |
 | `--ctx <n>` | Context size |
-| `--gpu <n>` | GPU layers |
-| `--threads <n>` | Thread count |
+| `--port <N>` | LLM server port (routes to `UseLocalLLM(port:)` → `ServerLauncher --port`) |
 | `--temp <f>` | Temperature |
 | `--filter <name>` | Test filter prefix |
 | `--verbose` / `-v` | Verbose test output |
+
+> `--gpu` / `--threads` are server-side (LLM server `llm-server.json`) since v11.2 — not parsed by the console.
