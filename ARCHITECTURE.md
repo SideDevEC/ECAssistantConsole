@@ -1,6 +1,6 @@
 # ECAssistant Console — Architecture
 
-**Updated:** 2026-08-25 (v11.2 — LLamaSharp packages removed, port control wired through Core)
+**Updated:** 2026-08-25 (v11.6 — DLL sync, idle watchdog, shutdown wiring)
 **Build:** 0 errors, 0 warnings
 **Tests:** 5/5 mock tests passing
 
@@ -65,3 +65,11 @@ ECAssistantTUI is a **library** — it can be hosted by any .NET 8 app. The cons
 | `--verbose` / `-v` | Verbose test output |
 
 > `--gpu` / `--threads` are server-side (LLM server `llm-server.json`) since v11.2 — not parsed by the console.
+
+## DLL Sync (v11.6)
+
+Console references Core + TUI as pre-built DLLs from `lib/`. After building Core/TUI, DLLs must be copied to **both**:
+- `ECAssistantConsole/lib/*.dll` (compile-time reference)
+- `ECAssistantConsole/bin/Debug/net8.0/*.dll` (runtime copy — `--no-build` uses this)
+
+Failing to copy to `bin/Debug` means `dotnet run --no-build` uses stale DLLs.
