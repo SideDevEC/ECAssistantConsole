@@ -1,6 +1,6 @@
 # PACKAGE-MAP.md — ECAssistantConsole
 
-Generated: 2026-08-26T10:51:43.912063+00:00
+Generated: 2026-08-26T11:58:22.928159+00:00
 
 ---
 
