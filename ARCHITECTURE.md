@@ -1,6 +1,6 @@
 # ECAssistant Console — Architecture
 
-**Updated:** 2026-08-25 (v11.6 — DLL sync, idle watchdog, shutdown wiring)
+**Updated:** 2026-08-26 (v11.8 — LDC compliance update)
 **Build:** 0 errors, 0 warnings
 **Tests:** 5/5 mock tests passing
 
