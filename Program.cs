@@ -152,7 +152,12 @@ public class Program
             if (selectable.Count == 0) return;
 
             var flat = new List<ModelCatalogEntry>();
-            foreach (var group in new[] { CatalogModelCategory.Chat, CatalogModelCategory.Vision, CatalogModelCategory.Embedding })
+            Console.Write("Enable vision (image understanding)? [Y/n]: ");
+            var visionEnabled = (Console.ReadLine()?.Trim() ?? "").ToLowerInvariant() != "n";
+            var groups = visionEnabled
+                ? new[] { CatalogModelCategory.Vision, CatalogModelCategory.Embedding }
+                : new[] { CatalogModelCategory.Chat, CatalogModelCategory.Embedding };
+            foreach (var group in groups)
             {
                 var entries = selectable.Where(m => m.Category == group).ToList();
                 if (entries.Count == 0) continue;
