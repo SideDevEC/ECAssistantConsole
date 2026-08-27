@@ -73,3 +73,6 @@ Console references Core + TUI as pre-built DLLs from `lib/`. After building Core
 - `ECAssistantConsole/bin/Debug/net8.0/*.dll` (runtime copy — `--no-build` uses this)
 
 Failing to copy to `bin/Debug` means `dotnet run --no-build` uses stale DLLs.
+## Changelog — 2026-08-27
+
+- build.sh → forwards to repo-root script (per-project standalone copies were path-broken)
