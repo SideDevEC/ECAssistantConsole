@@ -84,7 +84,8 @@ public class Program
                 verbose = true;
         }
 
-        var allTests = useMock ? EcaTests.MockScenarios : EcaTests.All;
+        var ecaTests = new EcaTestSuite();
+        var allTests = useMock ? ecaTests.MockScenarios : ecaTests.All;
         List<TestScenario> tests;
         if (!string.IsNullOrEmpty(filter))
         {
