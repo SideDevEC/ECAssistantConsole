@@ -235,6 +235,9 @@ public class Program
         var embeddingModelId = Console.ReadLine()?.Trim() ?? "";
         if (embeddingModelId.Length == 0) embeddingModelId = "text-embedding-3-small";
 
+        Console.Write("  Does this model support vision (image input)? [y/N]: ");
+        var visionEnabled = (Console.ReadLine()?.Trim() ?? "").ToLowerInvariant() is "y" or "yes";
+
         Console.WriteLine("  Testing connection...");
         var reachable = await TestRemoteReachableAsync(endpoint, apiKey);
         if (!reachable)
@@ -254,7 +257,8 @@ public class Program
             Endpoint = endpoint,
             ApiKey = apiKey.Length > 0 ? apiKey : null,
             ModelId = modelId,
-            EmbeddingModelId = embeddingModelId
+            EmbeddingModelId = embeddingModelId,
+            VisionEnabled = visionEnabled
         });
         Console.WriteLine($"✔ Remote AI configured: {modelId} @ {endpoint} (key encrypted to key store)");
     }
