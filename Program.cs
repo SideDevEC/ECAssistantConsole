@@ -27,6 +27,24 @@ public class Program
         // First-run: offer catalog downloads when no models exist yet (Build throws otherwise)
         await RunFirstRunSetupIfNeededAsync(userConfigDir);
 
+        // Local mode with no model file → friendly exit (Build would print a scary diagnostic box)
+        var appsettings = File.Exists(Path.Combine(userConfigDir, "appsettings.json"))
+            ? File.ReadAllText(Path.Combine(userConfigDir, "appsettings.json")) : "";
+        var remoteMode = appsettings.Contains("\"mode\": \"remote\"");
+        if (!remoteMode)
+        {
+            var anyModel = Directory.Exists(Path.Combine(userConfigDir, "llm", "models")) &&
+                           Directory.EnumerateFiles(Path.Combine(userConfigDir, "llm", "models"), "*.gguf").Any();
+            var modelPathCfg = ExtractJsonString(appsettings, "model_path");
+            if (!anyModel && (modelPathCfg == null || !File.Exists(modelPathCfg)))
+            {
+                Console.WriteLine("[Setup] No local model installed yet.");
+                Console.WriteLine("[Hint] Run again and pick models from the catalog (or choose remote AI),");
+                Console.WriteLine($"       or place a .gguf in {Path.Combine(userConfigDir, "llm", "models")}.");
+                return 1;
+            }
+        }
+
         var root = new EcaCompositionRoot(userConfigDir, args);
         EcaServiceBundle services;
         try
@@ -40,7 +58,7 @@ public class Program
             return 1;
         }
 
-        if (!File.Exists(services.ModelPath))
+        if (!File.Exists(services.ModelPath) && !services.Config.LlmProvider.IsRemote)
         {
             Console.WriteLine($"[Error] Model not found: {services.ModelPath}");
             Console.WriteLine($"[Hint] Put your .gguf model in: {userConfigDir} or set full path in appsettings.json");
@@ -74,10 +92,14 @@ public class Program
     {
         try
         {
+            // Create the runtime folder structure up front — a fresh install has nothing
+            Directory.CreateDirectory(userConfigDir);
             var llmRoot = Path.Combine(userConfigDir, "llm");
             var modelsDir = Path.Combine(llmRoot, "models");
+            Directory.CreateDirectory(modelsDir);
             var catalogPath = Path.Combine(userConfigDir, "model-catalog.json");
             var serverConfigPath = Path.Combine(llmRoot, "llm-server.json");
+            var appsettingsPath = Path.Combine(userConfigDir, "appsettings.json");
 
             var catalog = ModelCatalogDocument.Load(catalogPath);
             var validationError = catalog.Validate();
@@ -90,6 +112,7 @@ public class Program
             var detector = new FirstRunDetector(modelsDir, serverConfigPath);
             var status = detector.Evaluate(catalog.Models);
             if (!status.NeedsSetup) return;
+
 
             Console.WriteLine();
             Console.WriteLine("════════ First-Run Setup — no models detected ════════");
@@ -115,6 +138,15 @@ public class Program
             }
 
             Console.WriteLine();
+            Console.WriteLine("How should ECAssistant run its AI?");
+            Console.WriteLine("  [1] Local models  (GGUF on this machine — downloaded below)");
+            Console.WriteLine("  [2] Remote AI     (OpenAI-compatible API: OpenAI, OpenRouter, Ollama cloud, …)");
+            Console.Write("Choose [1/2, Enter = 1]: ");
+            if ((Console.ReadLine()?.Trim() ?? "") == "2")
+            {
+                await RunRemoteSetupAsync(appsettingsPath);
+                return; // Remote configured — no downloads needed.
+            }
             Console.Write("Numbers to install (e.g. 1,3 / 'a' = all ★ / Enter = skip): ");
             var input = Console.ReadLine()?.Trim() ?? "";
             if (input.Length == 0) return;
@@ -146,6 +178,81 @@ public class Program
         {
             Console.WriteLine($"[Setup] First-run setup skipped: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// Console first-run remote setup: prompts for OpenAI-compatible endpoint/key/model,
+    /// verifies reachability, encrypts the key into the key store, saves config.
+    /// </summary>
+    private static async Task RunRemoteSetupAsync(string appsettingsPath)
+    {
+        Console.WriteLine();
+        Console.WriteLine("── Remote AI setup ──");
+        Console.Write("  Endpoint (e.g. https://api.openai.com/v1): ");
+        var endpoint = Console.ReadLine()?.Trim() ?? "";
+        if (endpoint.Length == 0) { Console.WriteLine("Skipped."); return; }
+
+        Console.Write("  API key: ");
+        var apiKey = Console.ReadLine()?.Trim() ?? "";
+
+        Console.Write("  Model ID (e.g. gpt-4o-mini): ");
+        var modelId = Console.ReadLine()?.Trim() ?? "";
+        if (modelId.Length == 0) { Console.WriteLine("Skipped."); return; }
+
+        Console.Write("  Embedding model ID [Enter = text-embedding-3-small]: ");
+        var embeddingModelId = Console.ReadLine()?.Trim() ?? "";
+        if (embeddingModelId.Length == 0) embeddingModelId = "text-embedding-3-small";
+
+        Console.WriteLine("  Testing connection...");
+        var reachable = await TestRemoteReachableAsync(endpoint, apiKey);
+        if (!reachable)
+        {
+            Console.Write("  Connection failed — save anyway? [y/N]: ");
+            var save = (Console.ReadLine()?.Trim() ?? "").ToLowerInvariant();
+            if (save != "y" && save != "yes") { Console.WriteLine("Skipped."); return; }
+        }
+        else
+        {
+            Console.WriteLine("  ✔ Endpoint reachable.");
+        }
+
+        new RemoteProviderSetupWriter(appsettingsPath).Write(new RemoteProviderConfig
+        {
+            Name = new UriBuilder(endpoint).Host,
+            Endpoint = endpoint,
+            ApiKey = apiKey.Length > 0 ? apiKey : null,
+            ModelId = modelId,
+            EmbeddingModelId = embeddingModelId
+        });
+        Console.WriteLine($"✔ Remote AI configured: {modelId} @ {endpoint} (key encrypted to key store)");
+    }
+
+    private static async Task<bool> TestRemoteReachableAsync(string endpoint, string apiKey)
+    {
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            if (!string.IsNullOrEmpty(apiKey))
+                http.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+            using var resp = await http.GetAsync($"{endpoint.TrimEnd('/')}/models");
+            return resp.IsSuccessStatusCode;
+        }
+        catch { return false; }
+    }
+
+    /// <summary>Extract a simple "model_path": "..." value from the llm section of appsettings text (best effort).</summary>
+    private static string? ExtractJsonString(string json, string property)
+    {
+        var idx = json.IndexOf($"\"{property}\"", StringComparison.Ordinal);
+        if (idx < 0) return null;
+        var colon = json.IndexOf(':', idx);
+        if (colon < 0) return null;
+        var quote1 = json.IndexOf('"', colon + 1);
+        if (quote1 < 0) return null;
+        var quote2 = json.IndexOf('"', quote1 + 1);
+        if (quote2 < 0) return null;
+        var value = json[(quote1 + 1)..quote2];
+        return value.StartsWith("/") && File.Exists(value) ? value : null;
     }
 
     private static async Task<int> RunTestsAsync(string[] testArgs)
