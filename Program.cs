@@ -94,12 +94,23 @@ public class Program
         {
             // Create the runtime folder structure up front — a fresh install has nothing
             Directory.CreateDirectory(userConfigDir);
+            var appsettingsPath = Path.Combine(userConfigDir, "appsettings.json");
+            // Incorrect configs → quarantine and regenerate (installation will redo them)
+            if (File.Exists(appsettingsPath))
+            {
+                try { System.Text.Json.JsonDocument.Parse(File.ReadAllText(appsettingsPath)); }
+                catch (System.Text.Json.JsonException)
+                {
+                    var backup = appsettingsPath + ".broken." + DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+                    File.Move(appsettingsPath, backup);
+                    Console.WriteLine($"[Setup] appsettings.json is invalid — backed up to {Path.GetFileName(backup)}, regenerating.");
+                }
+            }
             var llmRoot = Path.Combine(userConfigDir, "llm");
             var modelsDir = Path.Combine(llmRoot, "models");
             Directory.CreateDirectory(modelsDir);
             var catalogPath = Path.Combine(userConfigDir, "model-catalog.json");
             var serverConfigPath = Path.Combine(llmRoot, "llm-server.json");
-            var appsettingsPath = Path.Combine(userConfigDir, "appsettings.json");
 
             var catalog = ModelCatalogDocument.Load(catalogPath);
             var validationError = catalog.Validate();
@@ -109,9 +120,24 @@ public class Program
                 return;
             }
 
+            // Installation starts when: no models/providers configured (detector),
+            // OR configs exist but don't resolve to a usable local model.
             var detector = new FirstRunDetector(modelsDir, serverConfigPath);
             var status = detector.Evaluate(catalog.Models);
-            if (!status.NeedsSetup) return;
+
+            var remoteConfigured = false;
+            if (File.Exists(appsettingsPath))
+            {
+                var appsettings = File.ReadAllText(appsettingsPath);
+                remoteConfigured = appsettings.Contains("\"mode\": \"remote\"") &&
+                                   appsettings.Contains("\"llm_providers\"") &&
+                                   appsettings.Contains("\"endpoint\"");
+            }
+            var localUsable = LocalModelUsable(appsettingsPath, serverConfigPath);
+            if (!status.NeedsSetup && (remoteConfigured || localUsable)) return;
+
+            if (!remoteConfigured && !localUsable && !status.NeedsSetup)
+                Console.WriteLine("[Setup] Config exists but no usable model or provider found — running installation.");
 
 
             Console.WriteLine();
@@ -160,7 +186,7 @@ public class Program
 
             using var http = new HttpClient();
             http.DefaultRequestHeaders.UserAgent.ParseAdd("ECAssistant-Installer/1.0");
-            var installer = new ModelInstallerService(http, modelsDir, serverConfigPath);
+            var installer = new ModelInstallerService(http, modelsDir, serverConfigPath, appsettingsPath);
 
             foreach (var idx in picks)
             {
@@ -238,6 +264,41 @@ public class Program
             return resp.IsSuccessStatusCode;
         }
         catch { return false; }
+    }
+
+    /// <summary>Local mode is usable when llm.model_path exists, or llm-server.json references an existing model file.</summary>
+    private static bool LocalModelUsable(string appsettingsPath, string serverConfigPath)
+    {
+        try
+        {
+            if (File.Exists(appsettingsPath))
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(appsettingsPath));
+                if (doc.RootElement.TryGetProperty("llm", out var llm) &&
+                    llm.TryGetProperty("model_path", out var mp) &&
+                    mp.ValueKind == System.Text.Json.JsonValueKind.String &&
+                    File.Exists(mp.GetString() ?? ""))
+                    return true;
+            }
+        }
+        catch { /* malformed handled earlier */ }
+
+        try
+        {
+            if (File.Exists(serverConfigPath))
+            {
+                using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(serverConfigPath));
+                if (doc.RootElement.TryGetProperty("models", out var models))
+                    foreach (var m in models.EnumerateArray())
+                        if (m.TryGetProperty("path", out var p) &&
+                            p.ValueKind == System.Text.Json.JsonValueKind.String &&
+                            File.Exists(p.GetString() ?? ""))
+                            return true;
+            }
+        }
+        catch { /* malformed server config → not usable */ }
+
+        return false;
     }
 
     /// <summary>Extract a simple "model_path": "..." value from the llm section of appsettings text (best effort).</summary>
