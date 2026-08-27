@@ -33,10 +33,11 @@ public class Program
         var remoteMode = appsettings.Contains("\"mode\": \"remote\"");
         if (!remoteMode)
         {
-            var anyModel = Directory.Exists(Path.Combine(userConfigDir, "llm", "models")) &&
-                           Directory.EnumerateFiles(Path.Combine(userConfigDir, "llm", "models"), "*.gguf").Any();
-            var modelPathCfg = ExtractJsonString(appsettings, "model_path");
-            if (!anyModel && (modelPathCfg == null || !File.Exists(modelPathCfg)))
+            // A GGUF on disk alone is NOT enough — config must resolve to it
+            var usable = LocalModelUsable(
+                Path.Combine(userConfigDir, "appsettings.json"),
+                Path.Combine(userConfigDir, "llm", "llm-server.json"));
+            if (!usable)
             {
                 Console.WriteLine("[Setup] No local model installed yet.");
                 Console.WriteLine("[Hint] Run again and pick models from the catalog (or choose remote AI),");
