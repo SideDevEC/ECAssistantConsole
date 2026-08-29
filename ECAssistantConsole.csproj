@@ -13,6 +13,9 @@
     <Reference Include="ECAssistant.Core">
       <HintPath>lib\ECAssistant.Core.dll</HintPath>
     </Reference>
+    <Reference Include="ECAssistant.Core.TestSupport">
+      <HintPath>lib\ECAssistant.Core.TestSupport.dll</HintPath>
+    </Reference>
     <Reference Include="ECAssistant.TUI">
       <HintPath>lib\ECAssistant.TUI.dll</HintPath>
     </Reference>
