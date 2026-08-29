@@ -1,11 +1,11 @@
 # Tests.API.md
 
-Types: 2  |  LOC: 107  |  ~48 tokens
+Types: 2  |  LOC: 107  |  ~47 tokens
 
 ---
 
 ### Class: RemoteModelProbeTests
-Cross-package deps: ECAssistantConsole.Setup, Xunit
+Cross-package deps: ECAssistant.Core.Setup, Xunit
 
 ### Class: SetupWizardPickTests
-Cross-package deps: ECAssistant.Core.Setup, ECAssistantConsole.Setup, Xunit
+Cross-package deps: ECAssistant.Core.Setup, ECAssistant.Core.Setup, Xunit

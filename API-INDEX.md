@@ -1,22 +1,14 @@
 # API-INDEX.md — ECAssistantConsole
 
-Generated: 2026-08-29T17:32:05.141506+00:00
-Packages: 2  |  Types: 12
+Generated: 2026-08-29T18:32:09.121643+00:00
+Packages: 2  |  Types: 4
 
 ---
 
-## ECAssistantConsole (10 types, ~797 LOC)
+## ECAssistantConsole (2 types, ~430 LOC)
 
-- 🔵 IRemoteModelProbe  (ECAssistantConsole)
-- 🔵 ISetupUi  (ECAssistantConsole)
-- 🟡 ConsoleSetupUi : ISetupUi  (ECAssistantConsole)
-- 🟣 RemoteModelInfo  (ECAssistantConsole)  deps: [string, bool]
-- 🟡 RemoteModelProbe : IRemoteModelProbe  (ECAssistantConsole)  deps: [HttpClient? httpClient =]
 - 🟡 RemoteModelProbeTests  (ECAssistantConsole)
-- 🟣 RemoteProbeResult  (ECAssistantConsole)  deps: [bool, IReadOnlyList, string? Error =]
-- 🟡 SetupWizard  (ECAssistantConsole)  deps: [ISetupUi]
 - 🟡 SetupWizardPickTests  (ECAssistantConsole)
-- 🟡 WizardContext  (ECAssistantConsole)
 
 ## Tests (2 types, ~107 LOC)
 

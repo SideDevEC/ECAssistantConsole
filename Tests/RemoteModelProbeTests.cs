@@ -1,6 +1,6 @@
 using System.Net;
 using System.Text;
-using ECAssistantConsole.Setup;
+using ECAssistant.Core.Setup;
 using Xunit;
 
 namespace ECAssistantConsole.Tests;

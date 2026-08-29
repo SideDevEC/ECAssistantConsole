@@ -1,7 +1,7 @@
 using System.Net.Http;
 using System.Text.Json;
 using ECAssistant.Core.Setup;
-using ECAssistantConsole.Setup;
+using ECAssistant.Core.Setup;
 
 namespace ECAssistantConsole;
 

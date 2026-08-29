@@ -1,5 +1,5 @@
 using ECAssistant.Core.Setup;
-using ECAssistantConsole.Setup;
+using ECAssistant.Core.Setup;
 using Xunit;
 
 namespace ECAssistantConsole.Tests;

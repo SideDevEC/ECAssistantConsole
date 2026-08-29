@@ -1,15 +1,13 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantConsole
 
-Generated: 2026-08-29T17:32:05.141781+00:00
-Edges: 3  |  Packages: 2
+Generated: 2026-08-29T18:32:09.121908+00:00
+Edges: 0  |  Packages: 2
 
 ---
 
 ## ECAssistantConsole
 
-- ConsoleSetupUi ──implements──► ISetupUi (ECAssistantConsole)
-- RemoteModelProbe ──implements──► IRemoteModelProbe (ECAssistantConsole)
-- SetupWizard ──uses──► ISetupUi (ECAssistantConsole)
+- (no outgoing edges)
 
 ## Tests
 
