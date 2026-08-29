@@ -76,7 +76,8 @@ internal sealed class FirstRunSetup
             Catalog = catalog,
             InstalledEntryIds = status.InstalledEntryIds,
             Installer = CreateInstaller(),
-            Probe = new RemoteModelProbe()
+            Probe = new RemoteModelProbe(),
+            ModelsDir = Path.Combine(_userConfigDir, "llm", "models")
         });
     }
 
