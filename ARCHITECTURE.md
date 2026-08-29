@@ -16,8 +16,33 @@ ECAssistantConsole/
 │     OutputType=Exe, AssemblyName=ecassistant
 │     Packages: Microsoft.Extensions.Logging.Abstractions + System.Text.Json (LLamaSharp removed in v11.2)
 │
-└── Program.cs                     ← Entry point
+├── Program.cs                     ← Entry point (--test → ConsoleTestHost, else ConsoleApplication)
+├── ConsoleApplication.cs          ← Composition root wiring, startup guards
+├── ConsoleTestHost.cs             ← --test harness host
+└── Setup/
+    ├── ISetupUi.cs                ← Console I/O abstraction (testable wizard)
+    ├── ConsoleSetupUi.cs          ← System.Console implementation
+    ├── FirstRunSetup.cs           ← Detects "setup needed", prepares dirs, launches wizard
+    ├── SetupWizard.cs             ← Staged installer (see Wizard Flow below)
+    ├── IRemoteModelProbe.cs       ← Remote /models probe contract
+    └── RemoteModelProbe.cs        ← GET {endpoint}/models, vision auto-detection
+└── Tests/                         ← ECAssistantConsole.Tests (xunit; excluded from app compile)
 ```
+
+## Wizard Flow (v12.0 — staged installer)
+
+Each stage shows only what it needs — no more wall-of-text:
+
+1. **LLM stage** — "local or remote?"
+   - Remote: endpoint → API key → probe `/models` → pick model from list → vision auto-detected via API (`architecture.input_modalities` / `modalities` / `capabilities.vision`); write via `RemoteProviderSetupWriter` (embedding id intentionally unset).
+   - Local: vision? y/n → list Chat **or** Vision catalog entries (never embeddings) → download via `ModelInstallerService`.
+2. **Embeddings/memory stage** — "enable memory embeddings?"
+   - No → `EmbeddingSetupWriter.Disable()`.
+   - Local → list Embedding catalog entries → download → `SetMode("local", modelId)`.
+   - Remote → endpoint (default = AI provider's) + key (default = provider's, encrypted as `keyfile:embeddings.key`) → probe + pick → `SetMode("remote", …)`.
+3. **Finish** — host proceeds normally: composition root → AppController → connect/session (server autostarts in local mode).
+
+Core support added: `EmbeddingConfig.ApiKey` (supports `keyfile:` refs), `SessionBuilder.ResolveEmbeddingApiKey()`, remote-mode branch in `ResolveEmbeddingEndpoint/ModelId`, `EmbeddingSetupWriter.Disable()`.
 
 ## Dependency Flow
 

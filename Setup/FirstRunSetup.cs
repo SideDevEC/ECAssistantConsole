@@ -1,6 +1,7 @@
 using System.Net.Http;
 using System.Text.Json;
 using ECAssistant.Core.Setup;
+using ECAssistantConsole.Setup;
 
 namespace ECAssistantConsole;
 
@@ -67,88 +68,26 @@ internal sealed class FirstRunSetup
         if (!remoteConfigured && !localUsable && !status.NeedsSetup)
             Console.WriteLine("[Setup] Config exists but no usable model or provider found — running installation.");
 
-        Console.WriteLine();
-        Console.WriteLine("════════ First-Run Setup — no models detected ════════");
-        Console.WriteLine($"Model catalog: {catalogPath} (edit anytime to add your own)");
-        Console.WriteLine();
-
-        var selectable = catalog.Models
-            .Where(m => !status.InstalledEntryIds.Contains(m.Id, StringComparer.OrdinalIgnoreCase))
-            .ToList();
-        if (selectable.Count == 0) return;
-
-        await SelectAndInstallAsync(appsettingsPath, selectable);
+        var wizard = new SetupWizard(new ConsoleSetupUi());
+        await wizard.RunAsync(new WizardContext
+        {
+            AppsettingsPath = appsettingsPath,
+            UserConfigDir = _userConfigDir,
+            Catalog = catalog,
+            InstalledEntryIds = status.InstalledEntryIds,
+            Installer = CreateInstaller(),
+            Probe = new RemoteModelProbe()
+        });
     }
 
-    /// <summary>Prompts for categories/picks and downloads the chosen local models.</summary>
-    private async Task SelectAndInstallAsync(string appsettingsPath, IReadOnlyList<ModelCatalogEntry> selectable)
+    private ModelInstallerService CreateInstaller()
     {
-        Console.Write("Enable vision (image understanding)? [Y/n]: ");
-        var visionEnabled = (Console.ReadLine()?.Trim() ?? "").ToLowerInvariant() != "n";
-        var groups = visionEnabled
-            ? new[] { CatalogModelCategory.Vision, CatalogModelCategory.Embedding }
-            : new[] { CatalogModelCategory.Chat, CatalogModelCategory.Embedding };
-
-        var flat = new List<ModelCatalogEntry>();
-        foreach (var group in groups)
-        {
-            var entries = selectable.Where(m => m.Category == group).ToList();
-            if (entries.Count == 0) continue;
-            Console.WriteLine($"── {group} ──");
-            foreach (var m in entries)
-            {
-                flat.Add(m);
-                Console.WriteLine($"  [{flat.Count}] {m.DisplayName}{(m.Recommended ? " ★" : "")}  ({m.TotalSizeGb:0.##} GB) — {m.Notes}");
-            }
-        }
-
-        Console.WriteLine();
-        Console.WriteLine("How should ECAssistant run its AI?");
-        Console.WriteLine("  [1] Local models  (GGUF on this machine — downloaded below)");
-        Console.WriteLine("  [2] Remote AI     (OpenAI-compatible API: OpenAI, OpenRouter, Ollama cloud, …)");
-        Console.Write("Choose [1/2, Enter = 1]: ");
-        if ((Console.ReadLine()?.Trim() ?? "") == "2")
-        {
-            await RemoteProviderSetup.RunInteractiveAsync(appsettingsPath);
-            return; // Remote configured — no downloads needed.
-        }
-
-        Console.Write("Numbers to install (e.g. 1,3 / 'a' = all ★ / Enter = skip): ");
-        var picks = ParsePicks(Console.ReadLine()?.Trim() ?? "", flat);
-        if (picks.Count == 0) return;
-
-        var appsettings = Path.Combine(_userConfigDir, "appsettings.json");
-        using var http = new HttpClient();
+        var http = new HttpClient();
         http.DefaultRequestHeaders.UserAgent.ParseAdd("ECAssistant-Installer/1.0");
-        var installer = new ModelInstallerService(
+        return new ModelInstallerService(
             http, Path.Combine(_userConfigDir, "llm", "models"),
-            Path.Combine(_userConfigDir, "llm", "llm-server.json"), appsettings);
-
-        foreach (var idx in picks)
-        {
-            var entry = flat[idx - 1];
-            Console.WriteLine($"▼ Downloading {entry.DisplayName} ({entry.TotalSizeGb:0.##} GB)");
-            var result = await installer.InstallAsync(entry, p =>
-            {
-                Console.Write($"\r  {p.Percent,5:0}%  {p.BytesReceived / 1048576.0:0} MB  {p.MbPerSecond:0.#} MB/s   ");
-            });
-            Console.WriteLine();
-            Console.WriteLine(result.Success ? $"✔ {result.Message}" : $"✘ {result.Message}");
-        }
-    }
-
-    private static IReadOnlyList<int> ParsePicks(string input, IReadOnlyList<ModelCatalogEntry> flat)
-    {
-        if (input.Length == 0) return Array.Empty<int>();
-
-        if (input.Equals("a", StringComparison.OrdinalIgnoreCase))
-            return Enumerable.Range(0, flat.Count).Where(i => flat[i].Recommended).Select(i => i + 1).ToList();
-
-        var picks = new List<int>();
-        foreach (var token in input.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-            if (int.TryParse(token, out var n) && n >= 1 && n <= flat.Count && !picks.Contains(n))
-                picks.Add(n);
-        return picks;
+            Path.Combine(_userConfigDir, "llm", "llm-server.json"),
+            Path.Combine(_userConfigDir, "appsettings.json"));
     }
 
     private void EnsureRuntimeDirectories()

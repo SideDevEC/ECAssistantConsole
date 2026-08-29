@@ -10,6 +10,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Test project lives in ./Tests and must not compile into the app assembly -->
+    <Compile Remove="Tests/**/*.cs" />
+    <None Remove="Tests/**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="ECAssistant.Core">
       <HintPath>lib\ECAssistant.Core.dll</HintPath>
     </Reference>

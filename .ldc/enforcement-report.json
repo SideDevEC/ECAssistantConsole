@@ -1,9 +1,16 @@
 {
   "project": "ECAssistantConsole",
-  "timestamp": "2026-08-29T09:32:28.674108+00:00",
-  "total_violations": 0,
+  "timestamp": "2026-08-29T10:56:23.530184+00:00",
+  "total_violations": 1,
   "errors": 0,
-  "warnings": 0,
-  "violations": [],
+  "warnings": 1,
+  "violations": [
+    {
+      "rule": "interface-first",
+      "severity": "warning",
+      "file": "<project-root>/ECAssistantConsole/Setup/SetupWizard.cs",
+      "message": "Public class SetupWizard in ECAssistantConsole implements no interface \u2014 may be a boundary leak"
+    }
+  ],
   "passed": true
 }
