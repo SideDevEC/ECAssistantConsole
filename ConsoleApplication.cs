@@ -1,6 +1,7 @@
 using ECAssistant.Core;
 using ECAssistant.Core.Composition;
 using ECAssistant.Core.Services;
+using ECAssistant.Core.Setup;
 using ECAssistant.TUI.Controller;
 using ECAssistant.TUI.UI;
 
@@ -69,7 +70,8 @@ internal sealed class ConsoleApplication
             services.Logger,
             null,
             services.BackgroundProcesses,
-            services.FileWatcher);
+            services.FileWatcher,
+            new AiSetupResetter());
     }
 
     private bool IsRemoteModeConfigured()
