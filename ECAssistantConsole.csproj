@@ -32,4 +32,15 @@
     <PackageReference Include="System.Text.Json" Version="10.0.4" />
   </ItemGroup>
 
+  <!-- Stage the LLM server runtime (staged in Core's output as server/) into this app's
+       output so the running binary is self-contained and never reaches into the dev tree. -->
+  <Target Name="StageLlmServer" AfterTargets="Build">
+    <ItemGroup>
+      <_LlmServerFiles Include="$(MSBuildThisFileDirectory)..\ECAssistantCore\bin\$(Configuration)\net8.0\server\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_LlmServerFiles)"
+          DestinationFiles="@(_LlmServerFiles->'$(OutDir)server\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
+  </Target>
+
 </Project>

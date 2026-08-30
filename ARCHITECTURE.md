@@ -1,8 +1,8 @@
 # ECAssistant Console — Architecture
 
-**Updated:** 2026-08-26 (v12.0 — build script, root-based config, fresh DLL sync)
+**Updated:** 2026-08-30 (v12.11 — root-only runtime contract, Core-owned server config)
 **Build:** 0 errors, 0 warnings
-**Tests:** 5/5 mock tests passing
+**Tests:** 8/8 tests passing
 
 ## Overview
 
@@ -23,6 +23,10 @@ ECAssistantConsole/
     ├── ISetupUi.cs                ← Console I/O abstraction (testable wizard)
     ├── ConsoleSetupUi.cs          ← System.Console implementation
     ├── FirstRunSetup.cs           ← Detects "setup needed", prepares dirs, launches wizard
+    │                                (v12.11: config mode checks use real JSON parsing via
+    │                                System.Text.Json — no more string-contains checks; handles
+    │                                both llm_provider and llm_providers key shapes; remote-mode
+    │                                detection covers provider mode "remote" written by the wizard)
     ├── SetupWizard.cs             ← Staged installer (see Wizard Flow below)
     ├── IRemoteModelProbe.cs       ← Remote /models probe contract
     └── RemoteModelProbe.cs        ← GET {endpoint}/models, vision auto-detection

@@ -1,7 +1,6 @@
 using System.Net.Http;
 using System.Text.Json;
 using ECAssistant.Core.Setup;
-using ECAssistant.Core.Setup;
 
 namespace ECAssistantConsole;
 
@@ -53,14 +52,7 @@ internal sealed class FirstRunSetup
         var detector = new FirstRunDetector(Path.Combine(_userConfigDir, "llm", "models"), serverConfigPath);
         var status = detector.Evaluate(catalog.Models);
 
-        var remoteConfigured = false;
-        if (File.Exists(appsettingsPath))
-        {
-            var appsettings = File.ReadAllText(appsettingsPath);
-            remoteConfigured = appsettings.Contains("\"mode\": \"remote\"") &&
-                               appsettings.Contains("\"llm_providers\"") &&
-                               appsettings.Contains("\"endpoint\"");
-        }
+        var remoteConfigured = File.Exists(appsettingsPath) && IsRemoteProviderConfigured(appsettingsPath);
 
         var localUsable = IsLocalModelUsable(appsettingsPath, serverConfigPath);
         if (!status.NeedsSetup && (remoteConfigured || localUsable)) return;
@@ -79,6 +71,53 @@ internal sealed class FirstRunSetup
             Probe = new RemoteModelProbe(),
             ModelsDir = Path.Combine(_userConfigDir, "llm", "models")
         });
+    }
+
+    /// <summary>
+    /// True when appsettings.json configures a usable remote provider.
+    /// Matches what SetupWizard/RemoteProviderSetupWriter writes: an
+    /// llm_provider section with mode="remote" and an endpoint, plus a
+    /// non-empty llm_providers section (either key is sufficient if only one
+    /// is present, since the writer always emits both).
+    /// </summary>
+    private static bool IsRemoteProviderConfigured(string appsettingsPath)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(File.ReadAllText(appsettingsPath));
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object) return false;
+
+            bool hasRemoteMode = false, hasEndpoint = false, hasProviders = false;
+
+            if (root.TryGetProperty("llm_provider", out var llm) && llm.ValueKind == JsonValueKind.Object)
+            {
+                hasRemoteMode = llm.TryGetProperty("mode", out var mode) &&
+                                mode.ValueKind == JsonValueKind.String &&
+                                string.Equals(mode.GetString(), "remote", StringComparison.OrdinalIgnoreCase);
+                hasEndpoint = llm.TryGetProperty("endpoint", out var endpoint) &&
+                              endpoint.ValueKind == JsonValueKind.String &&
+                              !string.IsNullOrWhiteSpace(endpoint.GetString());
+            }
+
+            if (root.TryGetProperty("llm_providers", out var providers) && providers.ValueKind == JsonValueKind.Object)
+            {
+                hasProviders =
+                    (providers.TryGetProperty("default_provider", out var def) &&
+                     def.ValueKind == JsonValueKind.String &&
+                     !string.IsNullOrWhiteSpace(def.GetString())) ||
+                    (providers.TryGetProperty("providers", out var list) &&
+                     list.ValueKind == JsonValueKind.Array && list.GetArrayLength() > 0);
+            }
+
+            return hasRemoteMode && hasEndpoint && hasProviders;
+        }
+        catch (Exception ex) when (ex is IOException or JsonException)
+        {
+            // Unreadable/invalid config: treat as not configured; the wizard
+            // (or quarantine in EnsureRuntimeDirectories) will handle it.
+            return false;
+        }
     }
 
     private ModelInstallerService CreateInstaller()
@@ -111,9 +150,18 @@ internal sealed class FirstRunSetup
         Directory.CreateDirectory(Path.Combine(_userConfigDir, "llm", "models"));
     }
 
-    /// <summary>Local mode is usable when llm.model_path exists, or llm-server.json references an existing model file.</summary>
+    /// <param name="appsettingsPath">Path to appsettings.json (used to locate the user config root).</param>
     internal static bool IsLocalModelUsable(string appsettingsPath, string serverConfigPath)
     {
+        // Composition root resolves relative model paths against the user config root;
+        // File.Exists alone would resolve them against the current working directory
+        // and falsely report an installed model as missing.
+        var userConfigDir = Path.GetDirectoryName(Path.GetFullPath(appsettingsPath))!;
+
+        bool ExistsResolved(string? p) =>
+            !string.IsNullOrEmpty(p) &&
+            (File.Exists(p) || File.Exists(Path.Combine(userConfigDir, p)));
+
         try
         {
             if (File.Exists(appsettingsPath))
@@ -122,7 +170,7 @@ internal sealed class FirstRunSetup
                 if (doc.RootElement.TryGetProperty("llm", out var llm) &&
                     llm.TryGetProperty("model_path", out var mp) &&
                     mp.ValueKind == JsonValueKind.String &&
-                    File.Exists(mp.GetString() ?? ""))
+                    ExistsResolved(mp.GetString()))
                     return true;
             }
         }
@@ -138,7 +186,7 @@ internal sealed class FirstRunSetup
                     foreach (var m in models.EnumerateArray())
                         if (m.TryGetProperty("path", out var p) &&
                             p.ValueKind == JsonValueKind.String &&
-                            File.Exists(p.GetString() ?? ""))
+                            ExistsResolved(p.GetString()))
                             return true;
             }
         }
