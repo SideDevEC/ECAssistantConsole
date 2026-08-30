@@ -1,6 +1,6 @@
 # API-INDEX.md — ECAssistantConsole
 
-Generated: 2026-08-30T15:57:45.247442+00:00
+Generated: 2026-08-30T18:16:57.156982+00:00
 Packages: 2  |  Types: 4
 
 ---
