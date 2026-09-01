@@ -7,11 +7,8 @@ namespace ECAssistantConsole.Tests;
 
 public class RemoteModelProbeTests
 {
-    private static RemoteModelProbe ProbeWith(string json, HttpStatusCode status = HttpStatusCode.OK)
-    {
-        var handler = new FakeHandler(json, status);
-        return new RemoteModelProbe(new HttpClient(handler) { BaseAddress = new Uri("http://localhost") });
-    }
+    private static HttpClient CreateClient(string json, HttpStatusCode status = HttpStatusCode.OK) =>
+        new(new FakeHandler(json, status)) { BaseAddress = new Uri("http://localhost") };
 
     private sealed class FakeHandler : HttpMessageHandler
     {
@@ -33,8 +30,8 @@ public class RemoteModelProbeTests
     [Fact]
     public async Task Probe_OpenAiFormat_ParsesIds()
     {
-        var probe = ProbeWith("""{"data":[{"id":"gpt-4o"},{"id":"gpt-4o-mini"}]}""");
-        var result = await probe.ProbeAsync("http://x/v1", "k1");
+        using var http = CreateClient("""{"data":[{"id":"gpt-4o"},{"id":"gpt-4o-mini"}]}""");
+        var result = await new RemoteModelProbe(http).ProbeAsync("http://x/v1", "k1");
         Assert.True(result.Reachable);
         Assert.Equal(2, result.Models.Count);
         Assert.Equal("gpt-4o", result.Models[0].Id);
@@ -43,13 +40,13 @@ public class RemoteModelProbeTests
     [Fact]
     public async Task Probe_OpenRouterArchitecture_DetectsVision()
     {
-        var probe = ProbeWith("""
+        using var http = CreateClient("""
             {"data":[
               {"id":"text-only","architecture":{"input_modalities":["text"]}},
               {"id":"vision-model","architecture":{"input_modalities":["text","image"]}}
             ]}
             """);
-        var result = await probe.ProbeAsync("http://x/v1", null);
+        var result = await new RemoteModelProbe(http).ProbeAsync("http://x/v1", null);
         Assert.False(result.Models[0].SupportsVision);
         Assert.True(result.Models[1].SupportsVision);
     }
@@ -58,16 +55,16 @@ public class RemoteModelProbeTests
     public async Task Probe_SendsBearerAuth_WhenKeyGiven()
     {
         var handler = new FakeHandler("""{"data":[]}""", HttpStatusCode.OK);
-        var probe = new RemoteModelProbe(new HttpClient(handler));
-        await probe.ProbeAsync("http://x/v1", "sekrit");
+        using var http = new HttpClient(handler);
+        await new RemoteModelProbe(http).ProbeAsync("http://x/v1", "sekrit");
         Assert.Equal("Bearer sekrit", handler.AuthHeader);
     }
 
     [Fact]
     public async Task Probe_TransportError_ReturnsUnreachable()
     {
-        var probe = new RemoteModelProbe(new HttpClient(new ThrowingHandler()));
-        var result = await probe.ProbeAsync("http://x/v1", null);
+        using var http = new HttpClient(new ThrowingHandler());
+        var result = await new RemoteModelProbe(http).ProbeAsync("http://x/v1", null);
         Assert.False(result.Reachable);
         Assert.Empty(result.Models);
     }

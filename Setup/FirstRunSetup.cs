@@ -39,7 +39,7 @@ internal sealed class FirstRunSetup
             await RunSetupIfNeededAsync(appsettingsPath, serverConfigPath, catalog, catalogPath);
         }
         // Deliberate boundary: first-run setup must never block application startup.
-        catch (Exception ex) when (ex is IOException or JsonException or HttpRequestException or InvalidOperationException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or HttpRequestException or InvalidOperationException or OperationCanceledException)
         {
             Console.WriteLine($"[Setup] First-run setup skipped: {ex.Message}");
         }
@@ -57,8 +57,19 @@ internal sealed class FirstRunSetup
         var localUsable = IsLocalModelUsable(appsettingsPath, serverConfigPath);
         if (!status.NeedsSetup && (remoteConfigured || localUsable)) return;
 
-        if (!remoteConfigured && !localUsable && !status.NeedsSetup)
+        // Reaching this point means either setup is needed or no usable provider/model was
+        // found, so when setup is NOT needed the config exists but resolves to nothing usable.
+        if (!status.NeedsSetup)
             Console.WriteLine("[Setup] Config exists but no usable model or provider found — running installation.");
+
+        // HttpClient is owned by this scope and disposed after the wizard completes;
+        // ModelInstallerService uses it for the whole download flow.
+        using var http = new HttpClient();
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("ECAssistant-Installer/1.0");
+        var installer = new ModelInstallerService(
+            http, Path.Combine(_userConfigDir, "llm", "models"),
+            Path.Combine(_userConfigDir, "llm", "llm-server.json"),
+            Path.Combine(_userConfigDir, "appsettings.json"));
 
         var wizard = new SetupWizard(new ConsoleSetupUi());
         await wizard.RunAsync(new WizardContext
@@ -67,7 +78,7 @@ internal sealed class FirstRunSetup
             UserConfigDir = _userConfigDir,
             Catalog = catalog,
             InstalledEntryIds = status.InstalledEntryIds,
-            Installer = CreateInstaller(),
+            Installer = installer,
             Probe = new RemoteModelProbe(),
             ModelsDir = Path.Combine(_userConfigDir, "llm", "models")
         });
@@ -80,7 +91,7 @@ internal sealed class FirstRunSetup
     /// non-empty llm_providers section (either key is sufficient if only one
     /// is present, since the writer always emits both).
     /// </summary>
-    private static bool IsRemoteProviderConfigured(string appsettingsPath)
+    internal static bool IsRemoteProviderConfigured(string appsettingsPath)
     {
         try
         {
@@ -112,22 +123,12 @@ internal sealed class FirstRunSetup
 
             return hasRemoteMode && hasEndpoint && hasProviders;
         }
-        catch (Exception ex) when (ex is IOException or JsonException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
         {
             // Unreadable/invalid config: treat as not configured; the wizard
             // (or quarantine in EnsureRuntimeDirectories) will handle it.
             return false;
         }
-    }
-
-    private ModelInstallerService CreateInstaller()
-    {
-        var http = new HttpClient();
-        http.DefaultRequestHeaders.UserAgent.ParseAdd("ECAssistant-Installer/1.0");
-        return new ModelInstallerService(
-            http, Path.Combine(_userConfigDir, "llm", "models"),
-            Path.Combine(_userConfigDir, "llm", "llm-server.json"),
-            Path.Combine(_userConfigDir, "appsettings.json"));
     }
 
     private void EnsureRuntimeDirectories()
@@ -141,7 +142,8 @@ internal sealed class FirstRunSetup
             try { JsonDocument.Parse(File.ReadAllText(appsettingsPath)); }
             catch (JsonException)
             {
-                var backup = appsettingsPath + ".broken." + DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+                // High-resolution suffix so two broken files in the same second never collide.
+                var backup = appsettingsPath + ".broken." + DateTime.UtcNow.Ticks;
                 File.Move(appsettingsPath, backup);
                 Console.WriteLine($"[Setup] appsettings.json is invalid — backed up to {Path.GetFileName(backup)}, regenerating.");
             }
@@ -175,7 +177,7 @@ internal sealed class FirstRunSetup
             }
         }
         catch (JsonException) { /* malformed handled earlier → not usable */ }
-        catch (IOException) { /* unreadable → not usable */ }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* unreadable → not usable */ }
 
         try
         {
@@ -191,7 +193,7 @@ internal sealed class FirstRunSetup
             }
         }
         catch (JsonException) { /* malformed server config → not usable */ }
-        catch (IOException) { /* unreadable → not usable */ }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* unreadable → not usable */ }
 
         return false;
     }

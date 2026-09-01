@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ECAssistant.Core;
 using ECAssistant.Core.Composition;
 using ECAssistant.Core.Services;
@@ -68,17 +69,28 @@ internal sealed class ConsoleApplication
             services.WorkingDirectory,
             services.UserConfigDirectory,
             services.Logger,
-            null,
+            null, // externalTools: the console host has no plugin loading yet; AppController falls back to an empty tool set.
             services.BackgroundProcesses,
             services.FileWatcher,
             new AiSetupResetter());
     }
 
+    /// <summary>
+    /// Reuses FirstRunSetup.IsRemoteProviderConfigured (proper JSON parsing) instead of a
+    /// fragile substring match, so both paths agree on what counts as a configured remote provider.
+    /// </summary>
     private bool IsRemoteModeConfigured()
     {
         var appsettingsPath = Path.Combine(_userConfigDir, "appsettings.json");
-        if (!File.Exists(appsettingsPath)) return false;
-        return File.ReadAllText(appsettingsPath).Contains("\"mode\": \"remote\"");
+        try
+        {
+            return File.Exists(appsettingsPath) && FirstRunSetup.IsRemoteProviderConfigured(appsettingsPath);
+        }
+        // Unreadable/invalid config → treat as not configured; startup falls back to local-model checks.
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            return false;
+        }
     }
 
     private void ReportNoLocalModel()

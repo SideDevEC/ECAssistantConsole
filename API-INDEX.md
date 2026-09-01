@@ -1,16 +1,16 @@
 # API-INDEX.md — ECAssistantConsole
 
-Generated: 2026-08-30T21:27:43.630762+00:00
+Generated: 2026-09-01T13:49:28.118838+00:00
 Packages: 2  |  Types: 4
 
 ---
 
-## ECAssistantConsole (2 types, ~460 LOC)
+## ECAssistantConsole (2 types, ~492 LOC)
 
 - 🟡 RemoteModelProbeTests  (ECAssistantConsole)
 - 🟡 SetupWizardPickTests  (ECAssistantConsole)
 
-## Tests (2 types, ~107 LOC)
+## Tests (2 types, ~109 LOC)
 
 - 🟡 RemoteModelProbeTests  (Tests)
 - 🟡 SetupWizardPickTests  (Tests)

@@ -10,8 +10,8 @@ namespace ECAssistantConsole;
 /// </summary>
 internal sealed class ConsoleTestHost
 {
-    private static readonly string UserConfigDir = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "ECAssistant");
+    // Shared with Program.cs via HostPaths so test mode and interactive mode target the same config root.
+    private static readonly string UserConfigDir = HostPaths.UserConfigDir;
 
     public async Task<int> RunAsync(string[] testArgs)
     {
@@ -37,8 +37,7 @@ internal sealed class ConsoleTestHost
         Console.WriteLine($"\n🧪 Running {tests.Count} test(s) with {(useMock ? "MOCK ENGINE (no model)" : $"model: {Path.GetFileName(modelPath)}")}");
         Console.WriteLine($"   Filter: {filter ?? "(all)"}\n");
 
-        var (results, resultsLogDir) = await ExecuteAsync(tests, useMock, modelPath, verbose);
-        var logPath = WriteResultsLog(results, useMock, modelPath, resultsLogDir);
+        var (results, logPath) = await ExecuteAsync(tests, useMock, modelPath, verbose);
         Console.WriteLine($"\n📝 Detailed log: {logPath}");
 
         return results.Any(r => !r.Passed) ? 1 : 0;
@@ -84,21 +83,25 @@ internal sealed class ConsoleTestHost
         return null;
     }
 
-    private static async Task<(IReadOnlyList<TestResult> Results, string TestRootDir)> ExecuteAsync(
+    private static async Task<(IReadOnlyList<TestResult> Results, string LogPath)> ExecuteAsync(
         IReadOnlyList<TestScenario> tests, bool useMock, string modelPath, bool verbose)
     {
         IReadOnlyList<TestResult> results = Array.Empty<TestResult>();
-        string testRootDir = "";
+        string logPath = "";
+        // TestRunner isolates all writes: each scenario runs in its own sandbox under
+        // TestRootDir (~/ECAssistant/tests/ by default, cleaned up on dispose) — it never
+        // writes into the real config files (appsettings.json, llm-server.json).
         await using (var runner = new TestRunner(useMock ? "/mock/model.gguf" : modelPath)
         {
             Verbose = verbose,
             UseMockEngine = useMock
         })
         {
-            testRootDir = runner.TestRootDir;
             results = await runner.RunAllAsync(tests);
+            // Write results log before runner is disposed (runner may clean up TestRootDir on dispose)
+            logPath = WriteResultsLog(results, useMock, modelPath, runner.TestRootDir);
         }
-        return (results, testRootDir);
+        return (results, logPath);
     }
 
     private static string WriteResultsLog(

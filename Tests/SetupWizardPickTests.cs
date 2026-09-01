@@ -1,5 +1,4 @@
 using ECAssistant.Core.Setup;
-using ECAssistant.Core.Setup;
 using Xunit;
 
 namespace ECAssistantConsole.Tests;
@@ -18,11 +17,20 @@ public class SetupWizardPickTests
     }
 
     [Fact]
-    public void ParsePicks_All_SelectsRecommendedOnly()
+    public void ParsePicks_LetterA_SelectsRecommendedOnly()
     {
         var list = new[] { Entry("a", true), Entry("b", false), Entry("c", true) };
         var result = SetupWizard.ParsePicks("a", list);
         Assert.Equal(new[] { "a", "c" }, result.Select(m => m.Id));
+    }
+
+    [Fact]
+    public void ParsePicks_LiteralAll_IsNotAValidPicker_SelectsNothing()
+    {
+        // Only the single letter "a" (case-insensitive) means "recommended"; the
+        // literal word "all" is not a recognized picker token and selects nothing.
+        var list = new[] { Entry("a", true), Entry("b", false), Entry("c", true) };
+        Assert.Empty(SetupWizard.ParsePicks("all", list));
     }
 
     [Fact]

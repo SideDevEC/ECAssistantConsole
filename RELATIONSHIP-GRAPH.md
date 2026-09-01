@@ -1,6 +1,6 @@
 # RELATIONSHIP-GRAPH.md — ECAssistantConsole
 
-Generated: 2026-08-30T21:27:43.631244+00:00
+Generated: 2026-09-01T13:49:28.119090+00:00
 Edges: 0  |  Packages: 2
 
 ---

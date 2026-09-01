@@ -1,6 +1,6 @@
 # ECAssistant Console — Architecture
 
-**Updated:** 2026-08-30 (v12.11 — root-only runtime contract, Core-owned server config)
+**Updated:** 2026-09-01 (v12.12 — full code audit: 16 bugs fixed — timeout handling, test log disposal, JSON parsing, resource management)
 **Build:** 0 errors, 0 warnings
 **Tests:** 8/8 tests passing
 
