@@ -1,6 +1,6 @@
 # ECAssistant Console — Architecture
 
-**Updated:** 2026-09-01 (v12.12 — full code audit: 16 bugs fixed — timeout handling, test log disposal, JSON parsing, resource management)
+**Updated:** 2026-09-02 (v14.7 — thin launcher, no changes; consumes Core+TUI via lib/ DLLs)
 **Build:** 0 errors, 0 warnings
 **Tests:** 8/8 tests passing
 
