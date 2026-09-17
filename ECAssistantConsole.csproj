@@ -30,9 +30,13 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
     <PackageReference Include="System.Text.Json" Version="10.0.4" />
+    <!-- Core is consumed as a static lib DLL, so its transitive package deps do not flow.
+         SecureKeyStore needs DataProtection at runtime — reference explicitly. -->
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="8.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.11" />
     <!-- LLM server runtime as NuGet content files. NuGet places server/ in the output directory.
          The wizard copies it to ~/.ECAssistantLLM/server/ on first install. -->
-    <PackageReference Include="ECAssistant.LLM.Server" Version="14.7.5" />
+    <PackageReference Include="ECAssistant.LLM.Server" Version="14.7.6" />
   </ItemGroup>
 
 </Project>
