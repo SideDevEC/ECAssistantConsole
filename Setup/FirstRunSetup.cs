@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Text.Json;
+using ECAssistant.Core;
 using ECAssistant.Core.Setup;
 
 namespace ECAssistantConsole;
@@ -8,14 +9,23 @@ namespace ECAssistantConsole;
 /// First-run installer and local-model readiness checks for the console host.
 /// When no models are detected, lists the editable catalog (model-catalog.json)
 /// and downloads the user's picks from HuggingFace, wiring llm-server.json automatically.
+/// All LLM server paths point to the shared standalone location (~/.ECAssistantLLM/).
 /// </summary>
 internal sealed class FirstRunSetup
 {
     private readonly string _userConfigDir;
+    private readonly string _llmRoot;
+    private readonly string _llmModelsDir;
+    private readonly string _llmServerConfigPath;
+    private readonly string _llmServerBinaryPath;
 
     public FirstRunSetup(string userConfigDir)
     {
         _userConfigDir = userConfigDir ?? throw new ArgumentNullException(nameof(userConfigDir));
+        _llmRoot = PathExpander.Default.Expand("~/.ECAssistantLLM");
+        _llmModelsDir = Path.Combine(_llmRoot, "models");
+        _llmServerConfigPath = Path.Combine(_llmRoot, "llm-server.json");
+        _llmServerBinaryPath = Path.Combine(_llmRoot, "server", "ECAssistant.LLM.dll");
     }
 
     /// <summary>Runs setup when configs are missing or resolve to no usable model/provider.</summary>
@@ -35,8 +45,7 @@ internal sealed class FirstRunSetup
             }
 
             var appsettingsPath = Path.Combine(_userConfigDir, "appsettings.json");
-            var serverConfigPath = Path.Combine(_userConfigDir, "llm", "llm-server.json");
-            await RunSetupIfNeededAsync(appsettingsPath, serverConfigPath, catalog, catalogPath);
+            await RunSetupIfNeededAsync(appsettingsPath, _llmServerConfigPath, catalog, catalogPath);
         }
         // Deliberate boundary: first-run setup must never block application startup.
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or HttpRequestException or InvalidOperationException or OperationCanceledException)
@@ -49,26 +58,31 @@ internal sealed class FirstRunSetup
     private async Task RunSetupIfNeededAsync(
         string appsettingsPath, string serverConfigPath, ModelCatalogDocument catalog, string catalogPath)
     {
-        var detector = new FirstRunDetector(Path.Combine(_userConfigDir, "llm", "models"), serverConfigPath);
+        var detector = new FirstRunDetector(_llmModelsDir, serverConfigPath, _llmServerBinaryPath);
         var status = detector.Evaluate(catalog.Models);
 
         var remoteConfigured = File.Exists(appsettingsPath) && IsRemoteProviderConfigured(appsettingsPath);
 
         var localUsable = IsLocalModelUsable(appsettingsPath, serverConfigPath);
-        if (!status.NeedsSetup && (remoteConfigured || localUsable)) return;
+        if (!status.NeedsSetup && !status.NeedsServerBinary && (remoteConfigured || localUsable)) return;
 
         // Reaching this point means either setup is needed or no usable provider/model was
         // found, so when setup is NOT needed the config exists but resolves to nothing usable.
-        if (!status.NeedsSetup)
+        if (!status.NeedsSetup && status.NeedsServerBinary)
+            Console.WriteLine("[Setup] Server binary not installed — running installation.");
+        else if (!status.NeedsSetup)
             Console.WriteLine("[Setup] Config exists but no usable model or provider found — running installation.");
+
+        // ── Step 0: Ensure server binary is installed from NuGet content ──
+        EnsureServerBinaryInstalled();
 
         // HttpClient is owned by this scope and disposed after the wizard completes;
         // ModelInstallerService uses it for the whole download flow.
         using var http = new HttpClient();
         http.DefaultRequestHeaders.UserAgent.ParseAdd("ECAssistant-Installer/1.0");
         var installer = new ModelInstallerService(
-            http, Path.Combine(_userConfigDir, "llm", "models"),
-            Path.Combine(_userConfigDir, "llm", "llm-server.json"),
+            http, _llmModelsDir,
+            _llmServerConfigPath,
             Path.Combine(_userConfigDir, "appsettings.json"));
 
         var wizard = new SetupWizard(new ConsoleSetupUi());
@@ -80,7 +94,7 @@ internal sealed class FirstRunSetup
             InstalledEntryIds = status.InstalledEntryIds,
             Installer = installer,
             Probe = new RemoteModelProbe(),
-            ModelsDir = Path.Combine(_userConfigDir, "llm", "models")
+            ModelsDir = _llmModelsDir
         });
     }
 
@@ -142,14 +156,42 @@ internal sealed class FirstRunSetup
             try { JsonDocument.Parse(File.ReadAllText(appsettingsPath)); }
             catch (JsonException)
             {
-                // High-resolution suffix so two broken files in the same second never collide.
                 var backup = appsettingsPath + ".broken." + DateTime.UtcNow.Ticks;
                 File.Move(appsettingsPath, backup);
                 Console.WriteLine($"[Setup] appsettings.json is invalid — backed up to {Path.GetFileName(backup)}, regenerating.");
             }
         }
 
-        Directory.CreateDirectory(Path.Combine(_userConfigDir, "llm", "models"));
+        // Ensure shared LLM directories exist
+        Directory.CreateDirectory(_llmRoot);
+        Directory.CreateDirectory(_llmModelsDir);
+        Directory.CreateDirectory(Path.Combine(_llmRoot, "server"));
+    }
+
+    /// <summary>
+    /// Ensure the LLM server binary is installed from the app's NuGet-populated content
+    /// directory to the shared location (~/.ECAssistantLLM/server/).
+    /// This is the ONLY place that references the app's content directory.
+    /// </summary>
+    private void EnsureServerBinaryInstalled()
+    {
+        var targetServerDir = Path.Combine(_llmRoot, "server");
+        var sourceServerDir = Path.Combine(AppContext.BaseDirectory, "server");
+
+        var installer = new ServerBinaryInstaller(sourceServerDir, targetServerDir);
+
+        if (installer.IsInstalled())
+            return; // already installed
+
+        if (!installer.IsSourceAvailable())
+        {
+            Console.WriteLine("[Setup] Warning: LLM server binary not found in app content.");
+            Console.WriteLine("[Setup] Ensure the ECAssistant.LLM.Server NuGet package is referenced.");
+            return; // non-fatal — wizard continues, server will fail at launch with a clear error
+        }
+
+        installer.Install();
+        Console.WriteLine($"[Setup] LLM server binary installed to {targetServerDir}");
     }
 
     /// <param name="appsettingsPath">Path to appsettings.json (used to locate the user config root).</param>

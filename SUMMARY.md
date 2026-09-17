@@ -3,7 +3,7 @@
 **Updated:** 2026-08-16 (v11.1)
 **Build:** 0 errors, 0 warnings
 **Tests:** 5/5 mock tests passing
-**Repo:** https://github.com/LLamaDudeX/ECAssistantConsole.git
+**Repo:** https://github.com/SideDevEC/ECAssistantConsole.git
 **Namespace:** `ECAssistantConsole`
 
 ## What It Is

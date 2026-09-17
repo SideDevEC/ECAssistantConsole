@@ -27,9 +27,12 @@ internal sealed class ConsoleApplication
     {
         await new FirstRunSetup(_userConfigDir).RunIfNeededAsync();
 
+        var llmRoot = PathExpander.Default.Expand("~/.ECAssistantLLM");
+        var serverConfigPath = Path.Combine(llmRoot, "llm-server.json");
+
         if (!IsRemoteModeConfigured() && !FirstRunSetup.IsLocalModelUsable(
                 Path.Combine(_userConfigDir, "appsettings.json"),
-                Path.Combine(_userConfigDir, "llm", "llm-server.json")))
+                serverConfigPath))
         {
             ReportNoLocalModel();
             return 1;
@@ -95,8 +98,9 @@ internal sealed class ConsoleApplication
 
     private void ReportNoLocalModel()
     {
+        var llmRoot = PathExpander.Default.Expand("~/.ECAssistantLLM");
         Console.WriteLine("[Setup] No local model installed yet.");
         Console.WriteLine("[Hint] Run again and pick models from the catalog (or choose remote AI),");
-        Console.WriteLine($"       or place a .gguf in {Path.Combine(_userConfigDir, "llm", "models")}.");
+        Console.WriteLine($"       or place a .gguf in {Path.Combine(llmRoot, "models")}.");
     }
 }
