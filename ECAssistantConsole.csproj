@@ -32,7 +32,7 @@
     <PackageReference Include="System.Text.Json" Version="10.0.4" />
     <!-- LLM server runtime as NuGet content files. NuGet places server/ in the output directory.
          The wizard copies it to ~/.ECAssistantLLM/server/ on first install. -->
-    <PackageReference Include="ECAssistant.LLM.Server" Version="14.7.4" />
+    <PackageReference Include="ECAssistant.LLM.Server" Version="14.7.5" />
   </ItemGroup>
 
 </Project>
