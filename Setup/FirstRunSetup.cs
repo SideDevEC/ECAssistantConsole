@@ -13,6 +13,10 @@ namespace ECAssistantConsole;
 /// </summary>
 internal sealed class FirstRunSetup
 {
+    /// <summary>ECAssistant.LLM.Server package version the console is built against.
+    /// Keep in sync with the ECAssistant.LLM.Server PackageReference in the csproj.</summary>
+    internal const string LlmServerPackageVersion = "14.7.8";
+
     private readonly string _userConfigDir;
     private readonly string _llmRoot;
     private readonly string _llmModelsDir;
@@ -73,8 +77,8 @@ internal sealed class FirstRunSetup
         else if (!status.NeedsSetup)
             Console.WriteLine("[Setup] Config exists but no usable model or provider found — running installation.");
 
-        // ── Step 0: Ensure server binary is installed from NuGet content ──
-        EnsureServerBinaryInstalled();
+        // ── Step 0: Ensure server binary is installed (embedded content OR nuget.org fetch) ──
+        await EnsureServerBinaryInstalledAsync().ConfigureAwait(false);
 
         // HttpClient is owned by this scope and disposed after the wizard completes;
         // ModelInstallerService uses it for the whole download flow.
@@ -169,11 +173,11 @@ internal sealed class FirstRunSetup
     }
 
     /// <summary>
-    /// Ensure the LLM server binary is installed from the app's NuGet-populated content
-    /// directory to the shared location (~/.ECAssistantLLM/server/).
-    /// This is the ONLY place that references the app's content directory.
+    /// Ensure the LLM server binary is installed to the shared location (~/.ECAssistantLLM/server/).
+    /// Preferred source: the app's NuGet-populated content directory (dev builds / self-contained tool).
+    /// Fallback (thin tool package): download ECAssistant.LLM.Server from nuget.org — ONCE, at setup time.
     /// </summary>
-    private void EnsureServerBinaryInstalled()
+    private async Task EnsureServerBinaryInstalledAsync(CancellationToken cancellationToken = default)
     {
         var targetServerDir = Path.Combine(_llmRoot, "server");
         var sourceServerDir = Path.Combine(AppContext.BaseDirectory, "server");
@@ -183,15 +187,22 @@ internal sealed class FirstRunSetup
         if (installer.IsInstalled())
             return; // already installed
 
-        if (!installer.IsSourceAvailable())
+        if (installer.IsSourceAvailable())
         {
-            Console.WriteLine("[Setup] Warning: LLM server binary not found in app content.");
-            Console.WriteLine("[Setup] Ensure the ECAssistant.LLM.Server NuGet package is referenced.");
-            return; // non-fatal — wizard continues, server will fail at launch with a clear error
+            installer.Install();
+            Console.WriteLine($"[Setup] LLM server binary installed to {targetServerDir}");
+            return;
         }
 
-        installer.Install();
-        Console.WriteLine($"[Setup] LLM server binary installed to {targetServerDir}");
+        // Thin tool package: no embedded server content — fetch from nuget.org.
+        using var http = new HttpClient();
+        http.DefaultRequestHeaders.UserAgent.ParseAdd("ECAssistant-Installer/1.0");
+        var fetcher = new NuGetServerFetcher(http, LlmServerPackageVersion, targetServerDir);
+        if (!await fetcher.FetchAndInstallAsync(cancellationToken).ConfigureAwait(false))
+        {
+            Console.WriteLine("[Setup] Warning: LLM server could not be installed.");
+            // non-fatal — wizard continues, server will fail at launch with a clear error
+        }
     }
 
     /// <param name="appsettingsPath">Path to appsettings.json (used to locate the user config root).</param>
