@@ -16,27 +16,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="ECAssistant.Core">
-      <HintPath>lib\ECAssistant.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="ECAssistant.Core.TestSupport">
-      <HintPath>lib\ECAssistant.Core.TestSupport.dll</HintPath>
-    </Reference>
-    <Reference Include="ECAssistant.TUI">
-      <HintPath>lib\ECAssistant.TUI.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
+    <PackageReference Include="ECAssistant.Core" Version="12.9.0" />
+    <PackageReference Include="ECAssistant.Core.TestSupport" Version="12.9.0" />
+    <PackageReference Include="ECAssistant.TUI" Version="12.9.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
     <PackageReference Include="System.Text.Json" Version="10.0.4" />
-    <!-- Core is consumed as a static lib DLL, so its transitive package deps do not flow.
+    <!-- Core is consumed as a package, but its DataProtection deps may not flow everywhere —
          SecureKeyStore needs DataProtection at runtime — reference explicitly. -->
     <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="8.0.11" />
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.11" />
     <!-- LLM server runtime as NuGet content files. NuGet places server/ in the output directory.
          The wizard copies it to ~/.ECAssistantLLM/server/ on first install. -->
-    <PackageReference Include="ECAssistant.LLM.Server" Version="14.7.6" />
+    <PackageReference Include="ECAssistant.LLM.Server" Version="14.7.7" />
   </ItemGroup>
 
 </Project>
