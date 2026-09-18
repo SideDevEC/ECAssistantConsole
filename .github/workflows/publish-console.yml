@@ -1,0 +1,85 @@
+name: Publish ECAssistant.Console (dotnet tool)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Package version (e.g. 1.0.0)'
+        required: true
+        default: '1.0.0'
+  push:
+    tags:
+      - 'console-v*'
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PACKAGES_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Add GitHub Packages source
+        run: |
+          dotnet nuget add source \
+            --username SideDevEC \
+            --password ${{ secrets.GITHUB_TOKEN }} \
+            --store-password-in-clear-text \
+            --name github "https://nuget.pkg.github.com/SideDevEC/index.json"
+
+      - name: Restore dependencies
+        run: dotnet restore ECAssistantConsole.csproj
+
+      - name: Build (Release)
+        run: dotnet build ECAssistantConsole.csproj -c Release --no-restore
+
+      - name: Set version from tag or input
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VERSION="${GITHUB_REF_NAME#console-v}"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+      - name: Pack NuGet packages
+        run: |
+          mkdir -p nupkg
+          dotnet pack ECAssistantConsole.csproj -c Release -o nupkg \
+            -p:PackageVersion=$VERSION --no-build
+
+      - name: Publish to GitHub Packages
+        run: dotnet nuget push ./nupkg/*.nupkg --source github --skip-duplicate
+
+      - name: Log in to nuget.org via OIDC (trusted publishing)
+        uses: NuGet/login@v1
+        id: nuget-login
+        continue-on-error: true
+        with:
+          user: SideDevEC
+
+      - name: Publish to nuget.org (trusted publishing)
+        if: ${{ steps.nuget-login.outputs.NUGET_API_KEY != '' }}
+        continue-on-error: true
+        run: |
+          dotnet nuget push ./nupkg/*.nupkg \
+            --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+      - name: Upload package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nupkg
+          path: nupkg/*.nupkg

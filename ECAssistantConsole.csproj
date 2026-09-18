@@ -7,7 +7,29 @@
     <Nullable>enable</Nullable>
     <RootNamespace>ECAssistantConsole</RootNamespace>
     <AssemblyName>ecassistant</AssemblyName>
+    <PackageId>ECAssistant.Console</PackageId>
+    <!-- Keep in sync with the ECAssistant.LLM.Server PackageReference below -->
+    <LLMPackageVersion>14.7.8</LLMPackageVersion>
+    <Version>1.0.0</Version>
+    <Authors>SideDevEC</Authors>
+    <Description>ECAssistant Console — the local AI agent for your terminal. Install once, chat with a fully local LLM-powered agent.</Description>
+    <PackageTags>ecassistant;ai-agent;local-llm;cli;terminal</PackageTags>
+    <PackageProjectUrl>https://github.com/SideDevEC/ECAssistantConsole</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>ecassistant</ToolCommandName>
+    <RollForward>Major</RollForward>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="" />
+    <!-- dotnet tool packages do NOT flow content files from dependencies, but the wizard
+         needs the LLM server assets (install-manifest.json). Pull them in explicitly. -->
+    <None Include="$(NuGetPackageRoot)ecassistant.llm.server\$(LLMPackageVersion)\content\server\**\*"
+          LinkBase="server" Pack="true" PackagePath="tools\net8.0\any\server\%(RecursiveDir)"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 
   <ItemGroup>
     <!-- Test project lives in ./Tests and must not compile into the app assembly -->
