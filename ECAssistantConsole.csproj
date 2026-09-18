@@ -16,9 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ECAssistant.Core" Version="12.9.0" />
-    <PackageReference Include="ECAssistant.Core.TestSupport" Version="12.9.0" />
-    <PackageReference Include="ECAssistant.TUI" Version="12.9.0" />
+    <PackageReference Include="ECAssistant.Core" Version="12.9.1" />
+    <PackageReference Include="ECAssistant.Core.TestSupport" Version="12.9.1" />
+    <PackageReference Include="ECAssistant.TUI" Version="12.9.1" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
     <PackageReference Include="System.Text.Json" Version="10.0.4" />
     <!-- Core is consumed as a package, but its DataProtection deps may not flow everywhere —
@@ -27,7 +27,7 @@
     <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.11" />
     <!-- LLM server runtime as NuGet content files. NuGet places server/ in the output directory.
          The wizard copies it to ~/.ECAssistantLLM/server/ on first install. -->
-    <PackageReference Include="ECAssistant.LLM.Server" Version="14.7.7" />
+    <PackageReference Include="ECAssistant.LLM.Server" Version="14.7.8" />
   </ItemGroup>
 
 </Project>
