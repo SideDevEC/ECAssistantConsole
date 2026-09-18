@@ -16,9 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ECAssistant.Core" Version="12.9.1" />
-    <PackageReference Include="ECAssistant.Core.TestSupport" Version="12.9.1" />
-    <PackageReference Include="ECAssistant.TUI" Version="12.9.1" />
+    <PackageReference Include="ECAssistant.Core" Version="12.9.2" />
+    <PackageReference Include="ECAssistant.Core.TestSupport" Version="12.9.2" />
+    <PackageReference Include="ECAssistant.TUI" Version="12.9.2" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
     <PackageReference Include="System.Text.Json" Version="10.0.4" />
     <!-- Core is consumed as a package, but its DataProtection deps may not flow everywhere —
