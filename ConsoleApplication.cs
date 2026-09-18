@@ -25,12 +25,14 @@ internal sealed class ConsoleApplication
 
     public async Task<int> RunAsync()
     {
-        await new FirstRunSetup(_userConfigDir).RunIfNeededAsync();
+        var ui = new ConsoleSetupUi();
+        var orchestrator = new FirstRunOrchestrator(_userConfigDir, ui);
+        await orchestrator.RunIfNeededAsync().ConfigureAwait(false);
 
         var llmRoot = PathExpander.Default.Expand("~/.ECAssistantLLM");
         var serverConfigPath = Path.Combine(llmRoot, "llm-server.json");
 
-        if (!IsRemoteModeConfigured() && !FirstRunSetup.IsLocalModelUsable(
+        if (!IsRemoteModeConfigured() && !FirstRunOrchestrator.IsLocalModelUsable(
                 Path.Combine(_userConfigDir, "appsettings.json"),
                 serverConfigPath))
         {
@@ -79,7 +81,7 @@ internal sealed class ConsoleApplication
     }
 
     /// <summary>
-    /// Reuses FirstRunSetup.IsRemoteProviderConfigured (proper JSON parsing) instead of a
+    /// Reuses FirstRunOrchestrator.IsRemoteProviderConfigured (proper JSON parsing) instead of a
     /// fragile substring match, so both paths agree on what counts as a configured remote provider.
     /// </summary>
     private bool IsRemoteModeConfigured()
@@ -87,7 +89,7 @@ internal sealed class ConsoleApplication
         var appsettingsPath = Path.Combine(_userConfigDir, "appsettings.json");
         try
         {
-            return File.Exists(appsettingsPath) && FirstRunSetup.IsRemoteProviderConfigured(appsettingsPath);
+            return File.Exists(appsettingsPath) && FirstRunOrchestrator.IsRemoteProviderConfigured(appsettingsPath);
         }
         // Unreadable/invalid config → treat as not configured; startup falls back to local-model checks.
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
