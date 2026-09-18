@@ -27,7 +27,7 @@
     <!-- dotnet tool packages do NOT flow content files from dependencies, but the wizard
          needs the LLM server assets (install-manifest.json). Pull them in explicitly. -->
     <None Include="$(NuGetPackageRoot)ecassistant.llm.server\$(LLMPackageVersion)\content\server\**\*"
-          LinkBase="server" Pack="true" PackagePath="tools\net8.0\any\server\%(RecursiveDir)"
+          LinkBase="server" Pack="true" PackagePath="tools\net8.0\any\server%(RecursiveDir)"
           CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
