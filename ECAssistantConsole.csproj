@@ -8,7 +8,7 @@
     <RootNamespace>ECAssistantConsole</RootNamespace>
     <AssemblyName>ecassistant</AssemblyName>
     <PackageId>ECAssistant.Console</PackageId>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <Authors>SideDevEC</Authors>
     <Description>ECAssistant Console — the local AI agent for your terminal. Install once, chat with a fully local LLM-powered agent.</Description>
     <PackageTags>ecassistant;ai-agent;local-llm;cli;terminal</PackageTags>
@@ -28,8 +28,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ECAssistant.Core" Version="12.9.4" />
-    <PackageReference Include="ECAssistant.Core.TestSupport" Version="12.9.4" />
+    <PackageReference Include="ECAssistant.Core" Version="12.9.5" />
+    <PackageReference Include="ECAssistant.Core.TestSupport" Version="12.9.5" />
     <PackageReference Include="ECAssistant.TUI" Version="12.9.3" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
     <PackageReference Include="System.Text.Json" Version="10.0.4" />

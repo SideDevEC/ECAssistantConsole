@@ -1,6 +1,7 @@
 # ECAssistant Console — Architecture
 
-**Updated:** 2026-09-18 (v1.0.2 — true thin host; all deps via GitHub Packages; setup logic in Core)
+**Updated:** 2026-09-19 (v1.0.3 — Core 12.9.5 with hardware-adaptive catalog: Bonsai default + Qwen3.5-4B light + Qwen3.6-35B max, all vision-capable; LLM server 14.9.2)
+**Previous:** 2026-09-18 (v1.0.2 — true thin host; all deps via GitHub Packages; setup logic in Core)
 **Build:** 0 errors, 0 warnings
 
 ## Overview
