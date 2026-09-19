@@ -9,11 +9,12 @@
     <RootNamespace>ECAssistantConsole.Tests</RootNamespace>
   </PropertyGroup>
 
+  <!-- Dev-only test suite: may reference Core/TestSupport directly — this csproj is
+       never packed, so the shipped dependency chain (Console → TUI → Core) is unaffected. -->
   <ItemGroup>
     <ProjectReference Include="..\ECAssistantConsole.csproj" />
-    <Reference Include="ECAssistant.Core">
-      <HintPath>..\lib\ECAssistant.Core.dll</HintPath>
-    </Reference>
+    <PackageReference Include="ECAssistant.Core" Version="12.9.8" />
+    <PackageReference Include="ECAssistant.Core.TestSupport" Version="12.9.8" />
   </ItemGroup>
 
   <ItemGroup>

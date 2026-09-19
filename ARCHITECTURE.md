@@ -1,6 +1,6 @@
 # ECAssistant Console — Architecture
 
-**Updated:** 2026-09-19 (v1.0.6 — Core 12.9.8 wizard rework: remote GitHub catalog, flat model list with local discovery + on-disk highlight, vision derived not asked; LLM server 14.9.3 with shutdown grace)
+**Updated:** 2026-09-19 (v1.0.6 — STRICT dependency chain: Console → TUI → Core only. Console references ECAssistant.TUI exclusively; all Core touchpoints (setup orchestrator, composition root, service bundle) moved behind ECAssistant.TUI.Hosting.TuiAppHost. `ecassistant --test` moved to the dev test suite. Core 12.9.8 wizard rework included; LLM server 14.9.3 with shutdown grace.)
 **Previous:** 2026-09-18 (v1.0.2 — true thin host; all deps via GitHub Packages; setup logic in Core)
 **Build:** 0 errors, 0 warnings
 
@@ -84,3 +84,18 @@ Restore needs `GITHUB_PACKAGES_TOKEN` (public GitHub Packages still requires aut
 
 - 2026-09-18: Setup/ folder removed — `FirstRunOrchestrator`/`ServerInstallCoordinator`/`NuGetServerFetcher` live in Core; tool package thinned 170 MB → 2.8 MB (v1.0.2); lib/ DLL sync retired long ago — all deps via GitHub Packages
 - 2026-09-02: thin launcher, NuGet packages flow
+
+## Addendum — strict dependency chain (1.0.6)
+
+**Rule (Emre):** Console → TUI → Core. The Console must never reference Core
+directly — TUI is the single dependency, so a stale TUI can never hide behind a
+direct Core pin.
+
+**Mechanics:** all Core touchpoints moved behind
+`ECAssistant.TUI.Hosting.TuiAppHost` (first-run setup, remote/local checks,
+composition root → AppController). The Console main csproj references only
+`ECAssistant.TUI` (Core flows transitively, incl. DataProtection for SecureKeyStore).
+
+**`ecassistant --test`:** the test host uses `Core.Testing` (a dev package) — it
+moved to the dev test suite (`Tests/ConsoleTestHost.cs`), out of the shipped tool.
+The `--test` CLI flag no longer exists in releases.

@@ -1,6 +1,7 @@
 using ECAssistant.Core;
 using ECAssistant.Core.Config;
 using ECAssistant.Core.Testing;
+using ECAssistantConsole.Tests;
 
 namespace ECAssistantConsole;
 
@@ -10,8 +11,9 @@ namespace ECAssistantConsole;
 /// </summary>
 internal sealed class ConsoleTestHost
 {
-    // Shared with Program.cs via HostPaths so test mode and interactive mode target the same config root.
-    private static readonly string UserConfigDir = HostPaths.UserConfigDir;
+    // Same config root the interactive app uses (mirrors HostPaths.UserConfigDir).
+    private static readonly string UserConfigDir = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".ECAssistant");
 
     public async Task<int> RunAsync(string[] testArgs)
     {

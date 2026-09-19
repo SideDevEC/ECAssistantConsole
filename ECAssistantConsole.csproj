@@ -28,15 +28,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="ECAssistant.Core" Version="12.9.8" />
-    <PackageReference Include="ECAssistant.Core.TestSupport" Version="12.9.8" />
-    <PackageReference Include="ECAssistant.TUI" Version="12.9.3" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.5" />
-    <PackageReference Include="System.Text.Json" Version="10.0.4" />
-    <!-- Core is consumed as a package, but its DataProtection deps may not flow everywhere —
-         SecureKeyStore needs DataProtection at runtime — reference explicitly. -->
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="8.0.11" />
-    <PackageReference Include="Microsoft.AspNetCore.DataProtection.Extensions" Version="8.0.11" />
+    <!-- Strict dependency chain: Console → TUI → Core. The Console never touches
+         Core types directly — everything goes through ECAssistant.TUI.Hosting.
+         Core flows transitively via the TUI package (incl. DataProtection for
+         SecureKeyStore). -->
+    <PackageReference Include="ECAssistant.TUI" Version="12.9.9" />
     <!-- LLM server is NOT embedded: the tool stays thin and FirstRunSetup downloads
          ECAssistant.LLM.Server from nuget.org at wizard time (see Setup/NuGetServerFetcher.cs).
          Keep FirstRunSetup.LlmServerPackageVersion in sync with the released server version. -->

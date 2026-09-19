@@ -1,6 +1,6 @@
 # ECAssistantConsole.API.md
 
-Types: 2  |  LOC: 349  |  ~41 tokens
+Types: 2  |  LOC: 302  |  ~41 tokens
 
 ---
 

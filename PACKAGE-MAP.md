@@ -1,13 +1,13 @@
 # PACKAGE-MAP.md — ECAssistantConsole
 
-Generated: 2026-09-19T13:49:52.184546+00:00
+Generated: 2026-09-19T15:42:06.955926+00:00
 
 ---
 
 | Package | Types | LOC | ~Tokens | Dependencies |
 |---|---|---|---|---|
-| ECAssistantConsole | 2 | 349 | ~41 | — |
-| Tests | 2 | 109 | ~41 | — |
+| ECAssistantConsole | 2 | 302 | ~41 | — |
+| Tests | 2 | 212 | ~41 | — |
 
 ---
 

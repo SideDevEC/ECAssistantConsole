@@ -1,16 +1,12 @@
 namespace ECAssistantConsole;
 
-/// <summary>Composition entry point. Dispatches to the test host or the interactive application.</summary>
+/// <summary>Composition entry point for the interactive application.</summary>
 internal static class Program
 {
     public static async Task<int> Main(string[] args)
     {
         try
         {
-            // ── Test mode: run automated tests ──
-            if (args.Length > 0 && args[0].Equals("--test", StringComparison.OrdinalIgnoreCase))
-                return await new ConsoleTestHost().RunAsync(args.Skip(1).ToArray());
-
             // ── Interactive application ──
             return await new ConsoleApplication(args, HostPaths.UserConfigDir).RunAsync();
         }

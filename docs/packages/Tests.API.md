@@ -1,6 +1,6 @@
 # Tests.API.md
 
-Types: 2  |  LOC: 109  |  ~41 tokens
+Types: 2  |  LOC: 212  |  ~41 tokens
 
 ---
 
