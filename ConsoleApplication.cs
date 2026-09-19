@@ -48,6 +48,6 @@ internal sealed class ConsoleApplication
     {
         Console.WriteLine("[Setup] No local model installed yet.");
         Console.WriteLine("[Hint] Run again and pick models from the catalog (or choose remote AI),");
-        Console.WriteLine($"       or place a .gguf in {Path.Combine(TuiAppHost.LlmRoot, "models")}.");
+        Console.WriteLine($"       or place a .gguf in {Path.Combine(TuiAppHost.LlmRoot(), "models")}.");
     }
 }
