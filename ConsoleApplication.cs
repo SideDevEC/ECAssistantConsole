@@ -1,12 +1,18 @@
+using System.Text.Json;
+using ECAssistant.Core;
+using ECAssistant.Core.Composition;
+using ECAssistant.Core.Services;
+using ECAssistant.Core.Setup;
 using ECAssistant.TUI.Controller;
-using ECAssistant.TUI.Hosting;
+using ECAssistant.TUI.UI;
 
 namespace ECAssistantConsole;
 
 /// <summary>
 /// Thin console host: runs first-run setup, validates model configuration,
-/// builds the app through the TUI host facade and hands control to the AppController.
-/// Depends on the TUI ONLY — the dependency chain is strictly Console → TUI → Core.
+/// wires the composition root and hands control to the TUI AppController.
+/// Dependency chain (Emre): this project references ONLY ECAssistant.TUI —
+/// Core flows transitively and is used directly (nothing hidden or wrapped).
 /// </summary>
 internal sealed class ConsoleApplication
 {
@@ -21,18 +27,26 @@ internal sealed class ConsoleApplication
 
     public async Task<int> RunAsync()
     {
-        await TuiAppHost.RunFirstRunSetupAsync(_userConfigDir).ConfigureAwait(false);
+        var ui = new ConsoleSetupUi();
+        var orchestrator = new FirstRunOrchestrator(_userConfigDir, ui);
+        await orchestrator.RunIfNeededAsync().ConfigureAwait(false);
 
-        if (!TuiAppHost.IsRemoteModeConfigured(_userConfigDir) && !TuiAppHost.IsLocalModelUsable(_userConfigDir))
+        var llmRoot = PathExpander.Default.Expand("~/.ECAssistantLLM");
+        var serverConfigPath = Path.Combine(llmRoot, "llm-server.json");
+
+        if (!IsRemoteModeConfigured() && !FirstRunOrchestrator.IsLocalModelUsable(
+                Path.Combine(_userConfigDir, "appsettings.json"),
+                serverConfigPath))
         {
             ReportNoLocalModel();
             return 1;
         }
 
-        AppController controller;
+        var root = new EcaCompositionRoot(_userConfigDir, _args);
+        EcaServiceBundle services;
         try
         {
-            controller = TuiAppHost.CreateApp(_userConfigDir, _args);
+            services = root.Build();
         }
         catch (InvalidOperationException ex)
         {
@@ -41,13 +55,56 @@ internal sealed class ConsoleApplication
             return 1;
         }
 
+        if (!File.Exists(services.ModelPath) && !services.Config.LlmProvider.IsRemote)
+        {
+            Console.WriteLine($"[Error] Model not found: {services.ModelPath}");
+            Console.WriteLine($"[Hint] Put your .gguf model in: {_userConfigDir} or set full path in appsettings.json");
+            return 1;
+        }
+
+        var controller = CreateController(services);
         return await controller.RunAsync();
+    }
+
+    private AppController CreateController(EcaServiceBundle services)
+    {
+        var console = new EGuiConsole();
+        return new AppController(
+            console,
+            services.Config,
+            services.ModelPath,
+            services.WorkingDirectory,
+            services.UserConfigDirectory,
+            services.Logger,
+            null, // externalTools: the console host has no plugin loading yet; AppController falls back to an empty tool set.
+            services.BackgroundProcesses,
+            services.FileWatcher,
+            new AiSetupResetter());
+    }
+
+    /// <summary>
+    /// Reuses FirstRunOrchestrator.IsRemoteProviderConfigured (proper JSON parsing) instead of a
+    /// fragile substring match, so both paths agree on what counts as a configured remote provider.
+    /// </summary>
+    private bool IsRemoteModeConfigured()
+    {
+        var appsettingsPath = Path.Combine(_userConfigDir, "appsettings.json");
+        try
+        {
+            return File.Exists(appsettingsPath) && FirstRunOrchestrator.IsRemoteProviderConfigured(appsettingsPath);
+        }
+        // Unreadable/invalid config → treat as not configured; startup falls back to local-model checks.
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            return false;
+        }
     }
 
     private void ReportNoLocalModel()
     {
+        var llmRoot = PathExpander.Default.Expand("~/.ECAssistantLLM");
         Console.WriteLine("[Setup] No local model installed yet.");
         Console.WriteLine("[Hint] Run again and pick models from the catalog (or choose remote AI),");
-        Console.WriteLine($"       or place a .gguf in {Path.Combine(TuiAppHost.LlmRoot(), "models")}.");
+        Console.WriteLine($"       or place a .gguf in {Path.Combine(llmRoot, "models")}.");
     }
 }

@@ -1,6 +1,6 @@
 # ECAssistant Console — Architecture
 
-**Updated:** 2026-09-19 (v1.0.6 — STRICT dependency chain: Console → TUI → Core only. Console references ECAssistant.TUI exclusively; all Core touchpoints (setup orchestrator, composition root, service bundle) moved behind ECAssistant.TUI.Hosting.TuiAppHost. `ecassistant --test` moved to the dev test suite. Core 12.9.8 wizard rework included; LLM server 14.9.3 with shutdown grace.)
+**Updated:** 2026-09-19 (v1.0.6 — dependency chain rule: the Console csproj references ECAssistant.TUI ONLY — Core flows transitively (used directly in code, nothing hidden or wrapped), so the Console always runs against the TUI's pinned Core. `ecassistant --test` moved to the dev test suite. Core 12.9.8 wizard rework included; LLM server 14.9.3 with shutdown grace.)
 **Previous:** 2026-09-18 (v1.0.2 — true thin host; all deps via GitHub Packages; setup logic in Core)
 **Build:** 0 errors, 0 warnings
 
@@ -99,3 +99,16 @@ composition root → AppController). The Console main csproj references only
 **`ecassistant --test`:** the test host uses `Core.Testing` (a dev package) — it
 moved to the dev test suite (`Tests/ConsoleTestHost.cs`), out of the shipped tool.
 The `--test` CLI flag no longer exists in releases.
+
+## Addendum — dependency chain rule (1.0.6)
+
+**Rule (Emre):** Console → TUI → Core as a pure package chain. The Console main
+csproj references `ECAssistant.TUI` ONLY; Core arrives transitively and is used
+directly in code — nothing hidden or wrapped. This guarantees the Console always
+runs against the TUI's pinned Core version (no stale-Core escape hatch).
+
+**`ecassistant --test`:** the test host uses `Core.Testing` (a dev package) — it
+moved to the dev test suite (`Tests/ConsoleTestHost.cs`), out of the shipped tool.
+The `--test` CLI flag no longer exists in releases. The dev test csproj may
+reference Core/TestSupport directly (it is never packed, so the shipped chain is
+unaffected).
