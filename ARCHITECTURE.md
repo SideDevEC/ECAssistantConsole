@@ -112,3 +112,13 @@ moved to the dev test suite (`Tests/ConsoleTestHost.cs`), out of the shipped too
 The `--test` CLI flag no longer exists in releases. The dev test csproj may
 reference Core/TestSupport directly (it is never packed, so the shipped chain is
 unaffected).
+
+## Changelog — 2026-09-21 (terminal restore on all exit paths)
+
+- `ConsoleApplication.RunAsync` wraps the `AppController.RunAsync` call in try/finally:
+  `controller.ShutdownTerminal()` runs even when init fails (return 1) or an exception
+  escapes — the terminal can no longer be left with alt-screen/cursor state leaked
+  into the next launch.
+- Companion fix in ECAssistantTUI (`EGuiConsole.RestoreTerminal`, idempotent) and
+  ECAssistantCore (`ServerConnection` probe timeout 5s → 12s — remote model-list
+  probes observed >10s on OpenRouter, falsely reporting "endpoint unreachable").
