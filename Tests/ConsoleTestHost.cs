@@ -1,6 +1,6 @@
 using ECAssistant.Core;
 using ECAssistant.Core.Config;
-using ECAssistant.Core.Testing;
+using ECAssistant.TestSupport;
 using ECAssistantConsole.Tests;
 
 namespace ECAssistantConsole;
