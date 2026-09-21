@@ -1,6 +1,6 @@
 # ECAssistant Console — Architecture
 
-**Updated:** 2026-09-19 (v1.0.6 — dependency chain rule: the Console csproj references ECAssistant.TUI ONLY — Core flows transitively (used directly in code, nothing hidden or wrapped), so the Console always runs against the TUI's pinned Core. `ecassistant --test` moved to the dev test suite. Core 12.9.8 wizard rework included; LLM server 14.9.3 with shutdown grace.)
+**Updated:** 2026-09-21 (v1.0.7 — Core 12.9.9 process-backend fix + always-alive server; LLM server 14.9.5; TUI 12.9.10)
 **Previous:** 2026-09-18 (v1.0.2 — true thin host; all deps via GitHub Packages; setup logic in Core)
 **Build:** 0 errors, 0 warnings
 
