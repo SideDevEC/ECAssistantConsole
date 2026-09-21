@@ -60,7 +60,7 @@ jobs:
             -p:PackageVersion=$VERSION --no-build
 
       - name: Publish to GitHub Packages
-        run: dotnet nuget push ./nupkg/*.nupkg --source github --skip-duplicate --timeout 900
+        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source github --skip-duplicate --timeout 900
 
       - name: Log in to nuget.org via OIDC (trusted publishing)
         uses: NuGet/login@v1
