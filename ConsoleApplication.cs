@@ -63,7 +63,16 @@ internal sealed class ConsoleApplication
         }
 
         var controller = CreateController(services);
-        return await controller.RunAsync();
+        try
+        {
+            return await controller.RunAsync();
+        }
+        finally
+        {
+            // Init failure (return 1) and exceptions skip the input loop's graceful
+            // shutdown — restore the terminal here so the next launch starts clean.
+            controller.ShutdownTerminal();
+        }
     }
 
     private AppController CreateController(EcaServiceBundle services)
