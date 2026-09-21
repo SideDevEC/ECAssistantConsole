@@ -14,10 +14,17 @@
   <ItemGroup>
     <ProjectReference Include="..\ECAssistantConsole.csproj" />
     <PackageReference Include="ECAssistant.Core" Version="12.9.9" />
-    <!-- TestSupport is an internal harness in the Core repo (never on NuGet).
-         Dev-only relative reference — all repos live side-by-side under ~/Agent/;
-         this csproj is never built in CI. -->
-    <ProjectReference Include="..\..\ECAssistantCore\TestSupport\ECAssistant.Core.TestSupport.csproj" />
+  </ItemGroup>
+
+  <!-- TestSupport: own repo (sibling). Local dev → project ref; CI/NuGet → package.
+       Dev-only test suite — this csproj is never packed and never built in CI,
+       so the shipped dependency chain (Console → TUI → Core) is unaffected. -->
+  <ItemGroup Condition="'$(EcaUseProjectRefs)' == 'true'">
+    <ProjectReference Include="..\..\ECAssistantTestSupport\ECAssistant.Core.TestSupport.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(EcaUseProjectRefs)' != 'true'">
+    <PackageReference Include="ECAssistant.Core.TestSupport" Version="12.9.9" />
   </ItemGroup>
 
   <ItemGroup>
