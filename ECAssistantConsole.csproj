@@ -32,7 +32,8 @@
          Core types directly — everything goes through ECAssistant.TUI.Hosting.
          Core flows transitively via the TUI package (incl. DataProtection for
          SecureKeyStore). -->
-    <PackageReference Include="ECAssistant.TUI" Version="12.9.10" />
+    <PackageReference Include="ECAssistant.TUI" Version="12.9.10" Condition="'$(EcaUseProjectRefs)' != 'true'" />
+    <ProjectReference Include="../ECAssistantTUI/ECAssistant.TUI.csproj" Condition="'$(EcaUseProjectRefs)' == 'true'" />
     <!-- LLM server is NOT embedded: the tool stays thin and FirstRunSetup downloads
          ECAssistant.LLM.Server from nuget.org at wizard time (see Setup/NuGetServerFetcher.cs).
          Keep FirstRunSetup.LlmServerPackageVersion in sync with the released server version. -->
