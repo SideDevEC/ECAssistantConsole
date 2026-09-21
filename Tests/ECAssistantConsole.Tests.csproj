@@ -13,8 +13,11 @@
        never packed, so the shipped dependency chain (Console → TUI → Core) is unaffected. -->
   <ItemGroup>
     <ProjectReference Include="..\ECAssistantConsole.csproj" />
-    <PackageReference Include="ECAssistant.Core" Version="12.9.8" />
-    <PackageReference Include="ECAssistant.Core.TestSupport" Version="12.9.8" />
+    <PackageReference Include="ECAssistant.Core" Version="12.9.9" />
+    <!-- TestSupport is an internal harness in the Core repo (never on NuGet).
+         Dev-only relative reference — all repos live side-by-side under ~/Agent/;
+         this csproj is never built in CI. -->
+    <ProjectReference Include="..\..\ECAssistantCore\TestSupport\ECAssistant.Core.TestSupport.csproj" />
   </ItemGroup>
 
   <ItemGroup>
