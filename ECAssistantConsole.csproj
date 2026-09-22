@@ -8,7 +8,7 @@
     <RootNamespace>ECAssistantConsole</RootNamespace>
     <AssemblyName>ecassistant</AssemblyName>
     <PackageId>ECAssistant.Console</PackageId>
-    <Version>1.0.9</Version>
+    <Version>1.0.10</Version>
     <Authors>SideDevEC</Authors>
     <Description>ECAssistant Console — the local AI agent for your terminal. Install once, chat with a fully local LLM-powered agent.</Description>
     <PackageTags>ecassistant;ai-agent;local-llm;cli;terminal</PackageTags>
@@ -32,7 +32,7 @@
          Core types directly — everything goes through ECAssistant.TUI.Hosting.
          Core flows transitively via the TUI package (incl. DataProtection for
          SecureKeyStore). -->
-    <PackageReference Include="ECAssistant.TUI" Version="12.9.12" Condition="'$(EcaUseProjectRefs)' != 'true'" />
+    <PackageReference Include="ECAssistant.TUI" Version="12.9.13" Condition="'$(EcaUseProjectRefs)' != 'true'" />
     <ProjectReference Include="../ECAssistantTUI/ECAssistant.TUI.csproj" Condition="'$(EcaUseProjectRefs)' == 'true'" />
     <!-- LLM server is NOT embedded: the tool stays thin and FirstRunSetup downloads
          ECAssistant.LLM.Server from nuget.org at wizard time (see Setup/NuGetServerFetcher.cs).
