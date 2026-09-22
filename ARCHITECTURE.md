@@ -1,6 +1,6 @@
 # ECAssistant Console — Architecture
 
-**Updated:** 2026-09-21 (v1.0.7 — Core 12.9.9 process-backend fix + always-alive server; LLM server 14.9.5; TUI 12.9.10)
+**Updated:** 2026-09-22 (release audit: Tests deps Core 12.9.11 + TestSupport 12.9.11; v1.0.8 shipped against TUI 12.9.11 which itself pinned Core 12.9.10 — fix train pending: TUI 12.9.12 + Console 1.0.9. Previous: v1.0.7 — Core 12.9.9 process-backend fix + always-alive server; LLM server 14.9.5; TUI 12.9.10)
 **Previous:** 2026-09-18 (v1.0.2 — true thin host; all deps via GitHub Packages; setup logic in Core)
 **Build:** 0 errors, 0 warnings
 

@@ -13,7 +13,7 @@
        never packed, so the shipped dependency chain (Console → TUI → Core) is unaffected. -->
   <ItemGroup>
     <ProjectReference Include="..\ECAssistantConsole.csproj" />
-    <PackageReference Include="ECAssistant.Core" Version="12.9.9" />
+    <PackageReference Include="ECAssistant.Core" Version="12.9.11" />
   </ItemGroup>
 
   <!-- TestSupport: own repo (sibling). Local dev → project ref; CI/NuGet → package.
@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup Condition="'$(EcaUseProjectRefs)' != 'true'">
-    <PackageReference Include="ECAssistant.TestSupport" Version="12.9.9" />
+    <PackageReference Include="ECAssistant.TestSupport" Version="12.9.11" />
   </ItemGroup>
 
   <ItemGroup>
