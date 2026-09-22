@@ -5,7 +5,7 @@
 [![NuGet](https://img.shields.io/nuget/v/ECAssistant.Console)](https://www.nuget.org/packages/ECAssistant.Console)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-We named it ECAssistant because we believe AI is there to **assist** people — and the Console is that promise in its most direct form: a colleague in your terminal that reads files, runs shell commands, searches the web, and shows you everything it does. Every tool call is permission-gated (approve / always / never). You stay in the loop, always.
+We named it ECAssistant because we believe AI is there to **assist** people — and the Console is that promise in its most direct form: a colleague in your terminal that reads files, runs shell commands, edits code, and shows you everything it does. Every tool call is permission-gated (approve once / always this session / deny). You stay in the loop, always.
 
 Part of [ECAssistant](https://github.com/SideDevEC/ECAssistant) — your models, your keys, your machine. MIT.
 
