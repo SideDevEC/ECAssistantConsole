@@ -35,7 +35,8 @@ After setup, nothing is downloaded at chat time — it's a finished, offline-cap
 
 - 🧠 **Tools** — files, shell, git, dotnet, web search/fetch, code editing, sub-agents. All permission-gated.
 - 🖥️ **Terminal UI** — streaming chat, session tabs, tool-call rendering (powered by [ECAssistant.TUI](https://github.com/SideDevEC/ECAssistantTUI)).
-- 👁️ **Vision** — send images to multimodal models.
+- 👁️ **Vision — images and PDFs to structured JSON** — screenshots, UI mockups, or scanned documents become a fixed, versioned JSON schema (elements, bounding boxes, label↔input associations, semantic groups) — analyzed locally, ready for programmatic use.
+- 🤝 **AskUser checkpoints** — when the model is genuinely unsure it asks you a real question with options instead of guessing.
 - 🔒 **Local-first** — everything runs on your machine; nothing phones home.
 
 ## Configuration
