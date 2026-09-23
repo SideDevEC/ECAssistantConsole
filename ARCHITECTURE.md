@@ -40,7 +40,7 @@ Program.cs → ConsoleApplication.RunAsync()
   ├── new FirstRunOrchestrator(userConfigDir, ConsoleSetupUi).RunIfNeededAsync()   ← Core
   ├── IsRemoteModeConfigured() / IsLocalModelUsable()                              ← Core statics
   ├── new EcaCompositionRoot(userConfigDir, args).Build()                          ← Core
-  └── new AppController(EGuiConsole, services…).RunAsync()                         ← TUI
+  └── new AppController(GuiConsole, services…).RunAsync()                         ← TUI
 ```
 
 > CLI args (including `--port <N>`) are forwarded to `EcaCompositionRoot(userConfigDir, args)`, which parses them via `AgentConfigBuilder`. `--port` routes to `UseLocalLLM(port:)` and is ultimately passed to the spawned LLM server by `ServerLauncher`.
@@ -119,6 +119,6 @@ unaffected).
   `controller.ShutdownTerminal()` runs even when init fails (return 1) or an exception
   escapes — the terminal can no longer be left with alt-screen/cursor state leaked
   into the next launch.
-- Companion fix in ECAssistantTUI (`EGuiConsole.RestoreTerminal`, idempotent) and
+- Companion fix in ECAssistantTUI (`GuiConsole.RestoreTerminal`, idempotent) and
   ECAssistantCore (`ServerConnection` probe timeout 5s → 12s — remote model-list
   probes observed >10s on OpenRouter, falsely reporting "endpoint unreachable").

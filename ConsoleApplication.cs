@@ -77,7 +77,7 @@ internal sealed class ConsoleApplication
 
     private AppController CreateController(EcaServiceBundle services)
     {
-        var console = new EGuiConsole();
+        var console = new GuiConsole();
         return new AppController(
             console,
             services.Config,

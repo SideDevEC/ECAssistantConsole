@@ -8,7 +8,7 @@
 
 ## What It Is
 
-The standalone console launcher for ECAssistant — a .NET 8 executable that wires `ECAssistant.TUI.dll` and `ECAssistant.Core.dll` together with `EGuiConsole` and `AppController`. This is what you run to use ECAssistant as a normal terminal application.
+The standalone console launcher for ECAssistant — a .NET 8 executable that wires `ECAssistant.TUI.dll` and `ECAssistant.Core.dll` together with `GuiConsole` and `AppController`. This is what you run to use ECAssistant as a normal terminal application.
 
 ## Project Structure
 
@@ -21,7 +21,7 @@ ECAssistantConsole/
 
 ## Dependencies
 
-- **ECAssistant.TUI** (project reference) — TUI library (AppController, EGuiConsole, layers)
+- **ECAssistant.TUI** (project reference) — TUI library (AppController, GuiConsole, layers)
 - **ECAssistant.Core** (project reference) — engine (AgentConfigBuilder, Logger, tests)
 - **Standard .NET 8**
 
@@ -50,10 +50,10 @@ dotnet run -- --test --mock
 ## What Program.cs Does
 
 1. Parses CLI args (`--test`, `--mock`, `--model`, etc.)
-2. Builds `EAgentConfig` via `AgentConfigBuilder`
+2. Builds `AppConfig` via `AgentConfigBuilder`
 3. Resolves model path (relative → absolute)
 4. Creates directories (`~/ECAssistant/`, Memory, Workspace)
-5. Creates `EGuiConsole` + `AppController` + calls `RunAsync()`
+5. Creates `GuiConsole` + `AppController` + calls `RunAsync()`
 
 No external tools are passed — standalone ECAssistant uses only built-in Core tools.
 
