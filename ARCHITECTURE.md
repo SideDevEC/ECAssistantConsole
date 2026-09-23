@@ -33,9 +33,9 @@ ECAssistantConsole/
 - All libraries flow as PackageReferences; the ~170 MB LLM server is fetched by the wizard from nuget.org at first local setup — never embedded
 - Publish: tag `console-v*` → CI → GitHub Packages + nuget.org (OIDC trusted publishing)
 
-## Dependency Chain Law
+## Release Law (unified versioning)
 
-Console references ONLY TUI. Ship order (one at a time, each confirmed indexed before the next): TestSupport → LLM → Core → TUI → Console. NEVER tag downstream packages while upstream isn't live on nuget.org. Bump `PackageReference` versions in the same commit as the release version bump.
+Console references ONLY TUI. **All packages (TestSupport, LLM, Core, TUI, Console) ship together under the SAME unified version number** (Emre, 2026-09-23; legacy packages deprecated + unlisted on nuget.org). All `PackageReference` versions and package versions move in lockstep — bump all 5 in the same commit, tag all in the same wave.
 
 ## CLI Arguments
 
