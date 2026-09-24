@@ -1,6 +1,6 @@
 # ECAssistant Console — Architecture (as-is)
 
-**Updated:** 2026-09-23 · **Build:** 0 errors
+**Updated:** 2026-09-24 · **Build:** 0 errors
 **History:** git log — this file describes the CURRENT state only.
 
 ## Overview
