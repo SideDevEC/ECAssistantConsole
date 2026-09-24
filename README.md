@@ -41,12 +41,39 @@ After setup, nothing is downloaded at chat time — it's a finished, offline-cap
 
 ## Configuration
 
-- `appsettings.json` — app-level settings (written by the wizard)
-- `~/.ECAssistantLLM/llm-server.json` — LLM server models and endpoints (managed by the wizard)
+- `appsettings.json` — app-level settings (written by the wizard). Key sections:
+
+```jsonc
+{
+  "llm_provider": { "mode": "local", "model_id": "qwen35-4b" },   // or "remote" + "endpoint" + hosted model
+  "model_tier":   { "mode": "small" }                              // small = scaffolding + tight sampling; large = slim profile
+}
+```
+
+- `~/.ECAssistantLLM/llm-server.json` — LLM server models and endpoints (managed by the wizard, local mode)
+
+Switching local ↔ remote is a config edit, never a code change. In remote mode the local server is never installed — pure-remote users get zero LLM footprint.
+
+## Everyday use
+
+```text
+ecassistant                     # launch (tabs: new session with N / switch with tab keys)
+> refactor the importer to use async streaming
+  ⚙ EFileResearchTool  imports/Importer.cs          ✓
+  ⚙ ECodeEditorTool    3 hunks · fuzzy match        ✓  (approval: [a]pprove / [A]lways / [n]o)
+  ⚙ EDotnetBuildTool   build & test gate            ✓ 0 errors
+● Done — importer now streams rows; 3 tests updated.
+```
+
+- Approvals are per tool call: **approve once / always this session / deny**.
+- Sub-agents (`ESubAgentTool`) handle delegated work in clean child sessions.
+- `EUserAskTool` — the agent asks *you* a numbered question when genuinely unsure (Enter = autonomous fallback).
 
 ## Build your own host
 
-The Console is deliberately thin — **~100 lines of wiring** around [ECAssistantCore](https://github.com/SideDevEC/ECAssistantCore). Read `ConsoleApplication.cs` as the reference for embedding an agent in *your* app.
+The Console is deliberately thin — **~100 lines of wiring** around [ECAssistantCore](https://github.com/SideDevEC/ECAssistantCore). Read `ConsoleApplication.cs` as the reference for embedding an agent in *your* app, or follow the [embedding guide](https://github.com/SideDevEC/ECAssistant/blob/main/docs/embedding-guide.md).
+
+**For AI agents:** see [AGENTS.md](AGENTS.md) — compact machine-readable orientation (files that matter, wizard order, release law).
 
 ## The ecosystem
 
