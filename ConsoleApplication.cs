@@ -31,7 +31,7 @@ internal sealed class ConsoleApplication
         var orchestrator = new FirstRunOrchestrator(_userConfigDir, ui);
         await orchestrator.RunIfNeededAsync().ConfigureAwait(false);
 
-        var llmRoot = PathExpander.Default.Expand("~/.ECAssistantLLM");
+        var llmRoot = PathExpander.Default.Expand("~/ECALLM");
         var serverConfigPath = Path.Combine(llmRoot, "llm-server.json");
 
         if (!IsRemoteModeConfigured() && !FirstRunOrchestrator.IsLocalModelUsable(
@@ -111,7 +111,7 @@ internal sealed class ConsoleApplication
 
     private void ReportNoLocalModel()
     {
-        var llmRoot = PathExpander.Default.Expand("~/.ECAssistantLLM");
+        var llmRoot = PathExpander.Default.Expand("~/ECALLM");
         Console.WriteLine("[Setup] No local model installed yet.");
         Console.WriteLine("[Hint] Run again and pick models from the catalog (or choose remote AI),");
         Console.WriteLine($"       or place a .gguf in {Path.Combine(llmRoot, "models")}.");

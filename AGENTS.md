@@ -19,7 +19,7 @@ Compact orientation for AI agents working in this repo. Humans: read README.md.
 ## What the wizard does (order matters)
 1. Local or remote choice (only the choice is downloaded)
 2. Model selection from catalog (chat/vision/embedding, SHA-256 verified)
-3. Local mode only: LLM server install → `~/.ECAssistantLLM/server/` (from NuGet package)
+3. Local mode only: LLM server install → `~/ECALLM/server/` (from NuGet package)
 4. Backend runtimes for special models (e.g. Bonsai ternary → llama.cpp runtime)
 After setup: zero downloads at chat time.
 

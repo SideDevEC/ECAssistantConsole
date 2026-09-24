@@ -26,7 +26,7 @@ The setup wizard walks you through everything:
 
 1. **Choose local or remote** — local GGUF models, or any OpenAI-compatible endpoint. Only what you pick is ever downloaded.
 2. **Model selection** — pick from the built-in catalog (chat, vision, embedding models), downloaded with SHA-256 verification.
-3. **LLM server install** (local mode) — server binaries come from the NuGet package; the wizard stages them to `~/.ECAssistantLLM/server/`.
+3. **LLM server install** (local mode) — server binaries come from the NuGet package; the wizard stages them to `~/ECALLM/server/`.
 4. **Backend runtimes** — ternary models (e.g. Bonsai/Qwen3.8-27B) get their required llama.cpp runtime installed automatically.
 
 After setup, nothing is downloaded at chat time — it's a finished, offline-capable product.
@@ -50,7 +50,7 @@ After setup, nothing is downloaded at chat time — it's a finished, offline-cap
 }
 ```
 
-- `~/.ECAssistantLLM/llm-server.json` — LLM server models and endpoints (managed by the wizard, local mode)
+- `~/ECALLM/llm-server.json` — LLM server models and endpoints (managed by the wizard, local mode)
 
 Switching local ↔ remote is a config edit, never a code change. In remote mode the local server is never installed — pure-remote users get zero LLM footprint.
 
